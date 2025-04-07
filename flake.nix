@@ -50,6 +50,11 @@
 
               baton.packages.${pkgs.system}.default
             ];
+
+            # Environment variables
+            env = {
+              BATON_DEBUG_PRINT_RESPONSE_BODY = ""; # use non-empty value to activate
+            };
           };
         }
       );
