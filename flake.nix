@@ -47,6 +47,7 @@
             packages = with pkgs; [
               go
               nil
+              gomodifytags
 
               baton.packages.${pkgs.system}.default
             ];
