@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"path"
 
@@ -18,23 +19,17 @@ import (
 const (
 	apiVersion  = "v1.0"
 	betaVersion = "beta"
-
-	microsoftBuiltinAppsOwnerID = "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
-
-	// https://learn.microsoft.com/en-us/graph/api/resources/approleassignment?view=graph-rest-1.0
-	//
-	//  	The identifier (id) for the app role which is assigned
-	//	to the principal. This app role must be exposed in the
-	//	appRoles property on the resource application's
-	//	service principal (resourceId). If the resource
-	//	application has not declared any app roles, a default
-	//	app role ID of 00000000-0000-0000-0000-000000000000
-	//	can be specified to signal that the principal is
-	//	assigned to the resource app without any specific app
-	//	roles. Required on create
-	//
-	defaultAppRoleAssignmentID = "00000000-0000-0000-0000-000000000000"
 )
+
+// makeGraphReadScopes is a helper function that generates a default graph scope.
+// documentation: https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope
+func makeGraphReadScopes(graphDomain string) []string {
+	if graphDomain == "" {
+		graphDomain = "graph.microsoft.com"
+	}
+
+	return []string{fmt.Sprintf("https://%s/.default", graphDomain)}
+}
 
 type Client struct {
 	GraphDomain string
@@ -59,16 +54,6 @@ func (c *Client) buildURL(reqPath string, v url.Values) string {
 		Scheme:   "https",
 		Host:     c.GraphDomain,
 		Path:     path.Join(apiVersion, reqPath),
-		RawQuery: v.Encode(),
-	}
-	return ux.String()
-}
-
-func (c *Client) buildBetaURL(reqPath string, v url.Values) string {
-	ux := url.URL{
-		Scheme:   "https",
-		Host:     c.GraphDomain,
-		Path:     path.Join(betaVersion, reqPath),
 		RawQuery: v.Encode(),
 	}
 	return ux.String()
@@ -126,7 +111,7 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 	return nil
 }
 
-func New(ctx context.Context, useCliCredentials bool, tenantID, clientID, clientSecret, graphDomain string) (*Client, error) {
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain string) (*Client, error) {
 	var cred azcore.TokenCredential
 
 	uhttpOptions := []uhttp.Option{
@@ -144,19 +129,9 @@ func New(ctx context.Context, useCliCredentials bool, tenantID, clientID, client
 		Transport: httpClient,
 	}
 
-	switch {
-	case useCliCredentials:
-		cred, err = azidentity.NewAzureCLICredential(nil)
-	case tenantID != "" && clientID != "" && clientSecret != "":
-		cred, err = azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, &azidentity.ClientSecretCredentialOptions{
-			ClientOptions: options,
-		})
-	default:
-		cred, err = azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
-			ClientOptions: options,
-			TenantID:      tenantID,
-		})
-	}
+	cred, err = azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, &azidentity.ClientSecretCredentialOptions{
+		ClientOptions: options,
+	})
 	if err != nil {
 		return nil, err
 	}
