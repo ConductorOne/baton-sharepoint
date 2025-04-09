@@ -48,15 +48,23 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 		return nil, err
 	}
 
-	cb, err := connector.New(ctx)
+	cb, err := connector.New(
+		ctx,
+		v.GetString(TenantIDField.FieldName),
+		v.GetString(ClientIDField.FieldName),
+		v.GetString(ClientSecretField.FieldName),
+		v.GetString(GraphDomainField.FieldName),
+	)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err
 	}
+
 	connector, err := connectorbuilder.NewConnector(ctx, cb)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err
 	}
+
 	return connector, nil
 }

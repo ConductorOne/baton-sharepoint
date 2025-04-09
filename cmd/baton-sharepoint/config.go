@@ -6,10 +6,22 @@ import (
 )
 
 var (
+	TenantIDField     = field.StringField("tenant-id", field.WithDescription("Azure Tenant ID"), field.WithRequired(true))
+	ClientIDField     = field.StringField("client-id", field.WithDescription("Azure Client ID"), field.WithRequired(true))
+	ClientSecretField = field.StringField("client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
+	GraphDomainField  = field.StringField("graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
+)
+
+var (
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
-	ConfigurationFields = []field.SchemaField{}
+	ConfigurationFields = []field.SchemaField{
+		TenantIDField,
+		ClientIDField,
+		ClientSecretField,
+		GraphDomainField,
+	}
 
 	// FieldRelationships defines relationships between the fields listed in
 	// ConfigurationFields that can be automatically validated. For example, a
