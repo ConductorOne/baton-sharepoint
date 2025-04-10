@@ -6,6 +6,7 @@ type GetAllSitesResponse struct {
 }
 
 type GetUserInformationListItemsResponse struct {
+	NextLink string `json:"@odata.nextLink"`
 	// TODO(shackra): try against a real SharePoint instance to figure the structure of the response
 }
 
