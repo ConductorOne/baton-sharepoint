@@ -15,7 +15,8 @@ import (
 // documentation: https://learn.microsoft.com/en-us/graph/api/list-get
 func (c *Client) GetUserInformationListItems(ctx context.Context, siteID string) error {
 	var defaultUrlValues url.Values
-	defaultUrlValues.Add("$expand", "Fields")
+	defaultUrlValues.Set("$expand", "Fields")
+	defaultUrlValues.Set("$top", "999")
 
 	targetURL := c.buildURL(fmt.Sprintf("/sites/%s/lists/User Information List/items", siteID), defaultUrlValues)
 
