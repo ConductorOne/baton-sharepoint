@@ -7,6 +7,7 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
+	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
 )
@@ -49,13 +50,13 @@ func (o *siteBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 }
 
 func (o *siteBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
-	return []*v2.Entitlement{
-		{ // TODO(shackra): check with someone else if that entitlement ID is "good"
-			Id:       fmt.Sprintf("site:%s:membership", resource.Id.Resource),
-			Resource: resource,
-			Slug:     "member", // TODO(shackra): check with someone else if that slug is adequate
-		},
-	}, "", nil, nil
+	opts := []entitlement.EntitlementOption{
+		entitlement.WithDisplayName(fmt.Sprintf("Membership to %s", resource.DisplayName)),
+	}
+
+	ent := entitlement.NewAssignmentEntitlement(resource, "member", opts...)
+
+	return []*v2.Entitlement{ent}, "", nil, nil
 }
 
 func (o *siteBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
