@@ -11,15 +11,15 @@ import (
 	"github.com/conductorone/baton-sharepoint/pkg/client"
 )
 
-type listBuilder struct {
+type siteBuilder struct {
 	client *client.Client
 }
 
-func (o *listBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
-	return listResourceType
+func (o *siteBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
+	return siteResourceType
 }
 
-func (o *listBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *siteBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
 	bag := &pagination.Bag{}
 	err := bag.Unmarshal(pToken.Token)
 	if err != nil {
@@ -27,7 +27,7 @@ func (o *listBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 	}
 
 	if bag.Current() != nil {
-		bag.Push(pagination.PageState{ResourceTypeID: listResourceType.Id})
+		bag.Push(pagination.PageState{ResourceTypeID: siteResourceType.Id})
 	}
 
 	sites, err := o.client.ListSites(ctx, bag)
@@ -48,28 +48,29 @@ func (o *listBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 	return ret, npt, nil, nil
 }
 
-func (o *listBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+func (o *siteBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
 	return []*v2.Entitlement{
 		{ // TODO(shackra): check with someone else if that entitlement ID is "good"
-			Id:       fmt.Sprintf("site:%s:members", resource.Id.Resource),
+			Id:       fmt.Sprintf("site:%s:membership", resource.Id.Resource),
 			Resource: resource,
 			Slug:     "member", // TODO(shackra): check with someone else if that slug is adequate
 		},
 	}, "", nil, nil
 }
 
-func (o *listBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
+func (o *siteBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
 	// TODO(shackra): implement this
 	return nil, "", nil, nil
 }
 
-func newListBuilder(c *client.Client) *listBuilder {
-	return &listBuilder{client: c}
+func newListBuilder(c *client.Client) *siteBuilder {
+	return &siteBuilder{client: c}
 }
 
 func convertSite2Resource(site client.Site) (*v2.Resource, error) {
-	profile := map[string]interface{}{
-		"name":          site.DisplayName,
+	profile := map[string]any{
+		"display name":  site.DisplayName,
+		"name":          site.Name,
 		"url":           site.WebUrl,
 		"personal site": site.IsPersonalSite,
 	}
@@ -78,7 +79,7 @@ func convertSite2Resource(site client.Site) (*v2.Resource, error) {
 		resource.WithGroupProfile(profile),
 	}
 
-	rsc, err := resource.NewGroupResource(site.Name, listResourceType, site.ID, opts)
+	rsc, err := resource.NewGroupResource(site.DisplayName, siteResourceType, site.ID, opts)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make resource from Site '%s', error: %w", site.DisplayName, err)
 	}
