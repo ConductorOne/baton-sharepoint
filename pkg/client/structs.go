@@ -15,7 +15,6 @@ type Site struct {
 	ID             string         `json:"id"`             // The unique identifier of the item. Read-only.
 	Name           string         `json:"name"`           // The name/title of the item.
 	DisplayName    string         `json:"displayName"`    // The full title for the site. Read-only.
-	IsPersonalSite bool           `json:"isPersonalSite"` // Identifies whether the site is personal or not. Read-only.
 	SiteCollection SiteCollection `json:"siteCollection"` // Provides details about the site's site collection. Available only on the root site. Read-only.
 	WebUrl         string         `json:"webUrl"`         // URL that displays the item in the browser. Read-only.
 	Root           *Root          `json:"root"`           // If present, provides the root site in the site collection. Read-only.

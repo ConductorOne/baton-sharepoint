@@ -70,10 +70,9 @@ func newListBuilder(c *client.Client) *siteBuilder {
 
 func convertSite2Resource(site client.Site) (*v2.Resource, error) {
 	profile := map[string]any{
-		"display name":  site.DisplayName,
-		"name":          site.Name,
-		"url":           site.WebUrl,
-		"personal site": site.IsPersonalSite,
+		"display name": site.DisplayName,
+		"name":         site.Name,
+		"url":          site.WebUrl,
 	}
 
 	opts := []resource.GroupTraitOption{
