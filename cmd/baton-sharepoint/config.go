@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	TenantIDField     = field.StringField("tenant-id", field.WithDescription("Azure Tenant ID"), field.WithRequired(true))
-	ClientIDField     = field.StringField("client-id", field.WithDescription("Azure Client ID"), field.WithRequired(true))
-	ClientSecretField = field.StringField("client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
-	GraphDomainField  = field.StringField("graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
+	TenantIDField     = field.StringField("azure-tenant-id", field.WithDescription("Azure Tenant ID"), field.WithRequired(true))
+	ClientIDField     = field.StringField("azure-client-id", field.WithDescription("Azure Client ID"), field.WithRequired(true))
+	ClientSecretField = field.StringField("azure-client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
+	GraphDomainField  = field.StringField("azure-graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
 )
 
 var (
