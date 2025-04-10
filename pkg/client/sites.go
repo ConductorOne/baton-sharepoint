@@ -20,6 +20,8 @@ func (c *Client) ListSites(ctx context.Context, bag *pagination.Bag) ([]Site, er
 	defaultValues := url.Values{}
 	defaultValues.Set("search", "")
 	defaultValues.Set("$select", strings.Join([]string{"id", "name", "displayName", "isPersonalSite", "siteCollection", "webUrl", "root"}, ","))
+	defaultValues.Set("$top", "999")
+
 	targetURL := c.buildURL("sites", defaultValues)
 	if bag.PageToken() != "" {
 		targetURL = bag.PageToken()
