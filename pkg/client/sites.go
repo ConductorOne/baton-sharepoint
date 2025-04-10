@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/conductorone/baton-sdk/pkg/pagination"
 )
@@ -16,7 +17,10 @@ import (
 // Permission required: `Sites.Read.All`
 // documentation: https://learn.microsoft.com/en-us/graph/api/site-getallsites
 func (c *Client) ListSites(ctx context.Context, bag *pagination.Bag) ([]Site, error) {
-	targetURL := c.buildURL("sites/getAllSites", url.Values{})
+	defaultValues := url.Values{}
+	defaultValues.Set("search", "")
+	defaultValues.Set("$select", strings.Join([]string{"id", "name", "displayName", "isPersonalSite", "siteCollection", "webUrl", "root"}, ","))
+	targetURL := c.buildURL("sites", defaultValues)
 	if bag.PageToken() != "" {
 		targetURL = bag.PageToken()
 	}
