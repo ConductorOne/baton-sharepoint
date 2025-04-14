@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 type Exchange struct {
 	cacheBearerToken    string
 	cacheBearerTokenExp time.Time
-	SharePointDomain    string
+	sharePointDomain    string
 
 	http *uhttp.BaseHttpClient
 }
@@ -41,7 +42,7 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 
 	body := url.Values{
 		"client_id":             []string{opts.ClientID},
-		"scope":                 []string{fmt.Sprintf(scopeSharePointTemplate, e.SharePointDomain)},
+		"scope":                 []string{fmt.Sprintf(scopeSharePointTemplate, e.sharePointDomain)},
 		"grant_type":            []string{"client_credentials"},
 		"client_assertion_type": []string{"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"},
 		"client_assertion":      []string{jwt},
@@ -76,4 +77,24 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 	}
 
 	return res.AccessToken, nil
+}
+
+func New(ctx context.Context, sharepointdomain string) (*Exchange, error) {
+	uhttpOptions := []uhttp.Option{
+		uhttp.WithLogger(true, ctxzap.Extract(ctx)),
+	}
+	httpClient, err := uhttp.NewClient(
+		ctx,
+		uhttpOptions...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	http, err := uhttp.NewBaseHttpClientWithContext(ctx, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Exchange{http: http, sharePointDomain: sharepointdomain}, nil
 }
