@@ -5,9 +5,12 @@ type GetAllSitesResponse struct {
 	NextLink string `json:"@odata.nextLink"`
 }
 
-type GetUserInformationListItemsResponse struct {
-	NextLink string `json:"@odata.nextLink"`
-	// TODO(shackra): try against a real SharePoint instance to figure the structure of the response
+type ListGroupsForSiteResponse struct {
+	Value []SharePointSiteGroup `json:"value"`
+}
+
+type ListUsersInGroupByGroupIDResponse struct {
+	Value []SharePointSiteUser `json:"value"`
 }
 
 // Local Variables:
