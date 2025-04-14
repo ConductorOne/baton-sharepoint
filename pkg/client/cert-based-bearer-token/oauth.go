@@ -20,6 +20,8 @@ type Exchange struct {
 	cacheBearerToken    string
 	cacheBearerTokenExp time.Time
 	sharePointDomain    string
+	cert                string
+	certPassword        string
 
 	http *uhttp.BaseHttpClient
 }
@@ -29,6 +31,9 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 	if !e.cacheBearerTokenExp.IsZero() && opts.TimeUTCNow.Before(e.cacheBearerTokenExp) {
 		return e.cacheBearerToken, nil
 	}
+	// fill the missing information
+	opts.pfxBase64 = e.cert
+	opts.password = e.certPassword
 
 	uri, err := url.Parse(fmt.Sprintf(oauthEndpointTemplate, opts.TenantID))
 	if err != nil {
@@ -79,7 +84,7 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 	return res.AccessToken, nil
 }
 
-func New(ctx context.Context, sharepointdomain string) (*Exchange, error) {
+func New(ctx context.Context, sharepointdomain, cert, certPassword string) (*Exchange, error) {
 	uhttpOptions := []uhttp.Option{
 		uhttp.WithLogger(true, ctxzap.Extract(ctx)),
 	}
@@ -96,5 +101,5 @@ func New(ctx context.Context, sharepointdomain string) (*Exchange, error) {
 		return nil, err
 	}
 
-	return &Exchange{http: http, sharePointDomain: sharepointdomain}, nil
+	return &Exchange{http: http, sharePointDomain: sharepointdomain, cert: cert, certPassword: certPassword}, nil
 }

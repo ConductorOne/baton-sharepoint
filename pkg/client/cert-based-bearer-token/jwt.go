@@ -17,8 +17,8 @@ import (
 var audienceTemplate = "https://login.microsoftonline.com/%s/v2.0" // tenant ID expected
 
 type JWTOptions struct {
-	PfxBase64  string
-	Password   string
+	pfxBase64  string
+	password   string
 	ClientID   string
 	TenantID   string
 	TimeUTCNow time.Time
@@ -27,12 +27,12 @@ type JWTOptions struct {
 }
 
 func generateSignedJWTFromPFX(opts JWTOptions) (string, error) {
-	pfxData, err := base64.StdEncoding.DecodeString(opts.PfxBase64)
+	pfxData, err := base64.StdEncoding.DecodeString(opts.pfxBase64)
 	if err != nil {
 		return "", fmt.Errorf("cannot decode string with .pfx certificate, error: %w", err)
 	}
 
-	privateKey, cert, err := pkcs12.Decode(pfxData, opts.Password)
+	privateKey, cert, err := pkcs12.Decode(pfxData, opts.password)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt .pfx certificate with password, error: %w", err)
 	}
