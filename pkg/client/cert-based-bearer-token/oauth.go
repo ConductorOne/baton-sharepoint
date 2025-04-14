@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	oauthEndpointTemplate   = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+	oauthEndpointTemplate   = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
 	scopeSharePointTemplate = "https://%s.sharepoint.com/.default"
 )
 
