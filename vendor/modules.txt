@@ -821,3 +821,7 @@ modernc.org/memory
 # modernc.org/sqlite v1.34.5
 ## explicit; go 1.21
 modernc.org/sqlite/lib
+# software.sslmate.com/src/go-pkcs12 v0.5.0
+## explicit; go 1.19
+software.sslmate.com/src/go-pkcs12
+software.sslmate.com/src/go-pkcs12/internal/rc2
