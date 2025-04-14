@@ -18,11 +18,12 @@ var (
 type Exchange struct {
 	cacheBearerToken    string
 	cacheBearerTokenExp time.Time
+	SharePointDomain    string
 
 	http *uhttp.BaseHttpClient
 }
 
-func (e *Exchange) GetBearerToken(ctx context.Context, sharePointDomain string, opts JWTOptions) (string, error) {
+func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string, error) {
 	// return the cache token we got from a previous exchange
 	if !e.cacheBearerTokenExp.IsZero() && opts.TimeUTCNow.Before(e.cacheBearerTokenExp) {
 		return e.cacheBearerToken, nil
@@ -40,7 +41,7 @@ func (e *Exchange) GetBearerToken(ctx context.Context, sharePointDomain string, 
 
 	body := url.Values{
 		"client_id":             []string{opts.ClientID},
-		"scope":                 []string{fmt.Sprintf(scopeSharePointTemplate, sharePointDomain)},
+		"scope":                 []string{fmt.Sprintf(scopeSharePointTemplate, e.SharePointDomain)},
 		"grant_type":            []string{"client_credentials"},
 		"client_assertion_type": []string{"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"},
 		"client_assertion":      []string{jwt},
