@@ -10,9 +10,7 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/pagination"
 )
 
-// ListSites List sites across geographies in an organization. This
-// API can also be used to enumerate all sites in a non-multi-geo
-// tenant.
+// ListSites List sites in an organization.
 //
 // Permission required: `Sites.Read.All`
 // documentation: https://learn.microsoft.com/en-us/graph/api/site-getallsites
