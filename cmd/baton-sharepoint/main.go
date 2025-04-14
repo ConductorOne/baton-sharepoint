@@ -54,6 +54,9 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 		v.GetString(ClientIDField.FieldName),
 		v.GetString(ClientSecretField.FieldName),
 		v.GetString(GraphDomainField.FieldName),
+		v.GetString(SharePointDomainField.FieldName),
+		v.GetString(CertPfxField.FieldName),
+		v.GetString(CertPasswordField.FieldName),
 	)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))

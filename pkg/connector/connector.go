@@ -9,10 +9,12 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
+	cert_based_bearer_token "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
 )
 
 type Connector struct {
-	client *client.Client
+	client        *client.Client
+	spTokenClient *cert_based_bearer_token.Exchange
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
@@ -43,11 +45,16 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain string) (*Connector, error) {
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string) (*Connector, error) {
 	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)
 	}
 
-	return &Connector{client: c}, nil
+	spc, err := cert_based_bearer_token.New(ctx, sharepointDomain, cert, certpassword)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make connector, error: %w", err)
+	}
+
+	return &Connector{client: c, spTokenClient: spc}, nil
 }

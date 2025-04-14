@@ -35,6 +35,10 @@ type Client struct {
 	GraphDomain string
 	token       azcore.TokenCredential
 	http        *uhttp.BaseHttpClient
+
+	// SharePoint related stuff
+	tenantID string
+	clientID string
 }
 
 type QueryOption func(*queryOptions)
@@ -145,5 +149,7 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain stri
 		token:       cred,
 		http:        http,
 		GraphDomain: graphDomain,
+		tenantID:    tenantID,
+		clientID:    clientID,
 	}, nil
 }
