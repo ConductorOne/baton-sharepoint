@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/conductorone/baton-sdk/pkg/pagination"
@@ -38,4 +39,23 @@ func (c *Client) ListSites(ctx context.Context, bag *pagination.Bag) ([]Site, er
 	}
 
 	return resp.Value, nil
+}
+
+// GetSiteByID fetch a sites.
+//
+// Permission required: `Sites.Read.All`
+// documentation: https://learn.microsoft.com/es-es/graph/api/site-get
+func (c *Client) GetSiteByID(ctx context.Context, id string) (*Site, error) {
+	defaultValues := url.Values{}
+	defaultValues.Set("$select", strings.Join([]string{"id", "name", "displayName", "siteCollection", "webUrl", "root"}, ","))
+
+	targetURL := c.buildURL(path.Join("sites", id), defaultValues)
+	var resp Site
+
+	err := c.query(ctx, makeGraphReadScopes(c.GraphDomain), http.MethodGet, targetURL, nil, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("GetSiteByID: request failed, error: %w", err)
+	}
+
+	return &resp, nil
 }
