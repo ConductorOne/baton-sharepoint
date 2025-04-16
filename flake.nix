@@ -50,6 +50,7 @@
               gomodifytags
               curl
               jq
+              toybox
 
               baton.packages.${pkgs.system}.default
 
@@ -60,6 +61,10 @@
 
               (pkgs.writeShellScriptBin "baton-generate-pfx-cert" (
                 builtins.readFile ./scripts/generate-self-signed-certificate.sh
+              ))
+
+              (pkgs.writeShellScriptBin "baton-get-sharepoint-bearer-token" (
+                builtins.readFile ./scripts/get-sharepoint-bearer-token.sh
               ))
             ];
 
