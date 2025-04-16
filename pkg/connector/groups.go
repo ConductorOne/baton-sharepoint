@@ -86,9 +86,26 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == 1 && strings.Index(user.LoginName, "membership") != -1) ||
-			(user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1) {
-			// TODO(shackra): use Baton ID annotations here
+		if (user.PrincipalType == 1 && strings.Index(user.LoginName, "membership") != -1) || (user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1) {
+			var resourceType string
+			var principalName string
+
+			if strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1 {
+				resourceType = "group"     // TODO(shackra): check this is the ID of that resource in baton-microsoft-entra
+				principalName = user.Email // groups don't have UserPrincipalName field set
+			} else {
+				resourceType = "user" // TODO(shackra): check this is the ID of that resource in baton-microsoft-entra
+				principalName = user.UserPrincipalName
+			}
+			principal := &v2.ResourceId{
+				ResourceType: resourceType,
+				Resource:     principalName,
+			}
+
+			ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
+				Key:   "email",
+				Value: principalName,
+			})))
 		} else if user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") == -1 {
 			userID, err := resource.NewResourceID(userResourceType, user.ODataID)
 			if err != nil {
