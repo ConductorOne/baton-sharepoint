@@ -57,6 +57,10 @@
               (pkgs.writeShellScriptBin "baton-get-jwt-token" (
                 builtins.readFile ./scripts/get-microsoft-graph-jwt.sh
               ))
+
+              (pkgs.writeShellScriptBin "baton-generate-pfx-cert" (
+                builtins.readFile ./scripts/generate-self-signed-certificate.sh
+              ))
             ];
 
             # Environment variables
