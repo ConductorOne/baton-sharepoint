@@ -86,27 +86,43 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == 1 && strings.Index(user.LoginName, "membership") != -1) || (user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1) {
+		if (user.PrincipalType == 1 && strings.Index(user.LoginName, "membership") != -1) || // If Entra user
+			(user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1) { // or Entra group
+			// Baton ID
 			var resourceType string
 			var principalName string
+			var keyName string
 
 			if strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1 {
-				resourceType = "group"     // TODO(shackra): check this is the ID of that resource in baton-microsoft-entra
-				principalName = user.Email // groups don't have UserPrincipalName field set
+				// Entra Groups don't have anything identifiable but their ID
+				resourceType = "group"
+				parts := strings.Split(user.LoginName, "|")
+				if len(parts) < 3 {
+					return nil, "", nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
+				}
+				principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
 			} else {
-				resourceType = "user" // TODO(shackra): check this is the ID of that resource in baton-microsoft-entra
+				resourceType = "user"
 				principalName = user.UserPrincipalName
+				keyName = "userPrincipalName"
 			}
+
 			principal := &v2.ResourceId{
 				ResourceType: resourceType,
 				Resource:     principalName,
 			}
 
-			ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
-				Key:   "email",
-				Value: principalName,
-			})))
-		} else if user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") == -1 {
+			if resourceType == "group" {
+				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+					Id: principalName,
+				})))
+			} else {
+				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
+					Key:   keyName,
+					Value: principalName,
+				})))
+			}
+		} else if user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") == -1 { // Regular grants
 			userID, err := resource.NewResourceID(userResourceType, user.ODataID)
 			if err != nil {
 				return nil, "", nil, err
