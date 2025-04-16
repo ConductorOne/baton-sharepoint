@@ -9,3 +9,15 @@ var siteResourceType = &v2.ResourceType{
 	DisplayName: "Site",
 	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
 }
+
+var groupResourceType = &v2.ResourceType{
+	Id:          "sharepoint_group",
+	DisplayName: "SharePoint Group",
+	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
+}
+
+var userResourceType = &v2.ResourceType{
+	Id:          "sharepoint_user",
+	DisplayName: "SharePoint User",
+	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_USER},
+}

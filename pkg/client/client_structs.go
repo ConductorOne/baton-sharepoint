@@ -13,6 +13,10 @@ type ListUsersInGroupByGroupIDResponse struct {
 	Value []SharePointSiteUser `json:"value"`
 }
 
+type ListUsersResponse struct {
+	Value []SharePointUser `json:"value"`
+}
+
 // Local Variables:
 // go-tag-args: ("-transform" "camelcase")
 // End:
