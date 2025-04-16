@@ -7,8 +7,6 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
-	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
-	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
 )
@@ -51,54 +49,11 @@ func (o *siteBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 }
 
 func (o *siteBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
-	opts := []entitlement.EntitlementOption{
-		entitlement.WithDisplayName(fmt.Sprintf("Membership to %s", resource.DisplayName)),
-	}
-
-	ent := entitlement.NewAssignmentEntitlement(resource, "member", opts...)
-
-	return []*v2.Entitlement{ent}, "", nil, nil
+	return nil, "", nil, nil
 }
 
 func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	site, err := o.client.GetSiteByID(ctx, rsc.Id.Resource)
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	// TODO(shackra): this may need pagination
-	groups, err := o.client.ListGroupsForSite(ctx, site.WebUrl)
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	var ret []*v2.Grant
-
-	for _, group := range groups {
-		// TODO(shackra): this may need pagination
-		users, err := o.client.ListUsersInGroupByGroupID(ctx, site.WebUrl, group.Id)
-		if err != nil {
-			return nil, "", nil, err
-		}
-		for _, user := range users {
-			// TODO(shackra): ignore SharePoint system users
-			// TODO(shackra): distinguish between users and groups
-			// TODO(shackra): treat differently the special groups `Everybody except external` and `Everybody`
-			userID, err := resource.NewResourceID(&v2.ResourceType{}, user.UserPrincipalName)
-			if err != nil {
-				return nil, "", nil, err
-			}
-			gt := grant.NewGrant(rsc, "membership", userID, grant.WithAnnotation(&v2.ExternalResourceMatch{
-				Key:          "email",
-				Value:        user.Email,
-				ResourceType: v2.ResourceType_TRAIT_USER,
-			}))
-
-			ret = append(ret, gt)
-		}
-	}
-
-	return ret, "", nil, nil
+	return nil, "", nil, nil
 }
 
 func newListBuilder(c *client.Client) *siteBuilder {
