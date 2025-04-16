@@ -14,7 +14,7 @@ usage() {
 }
 
 # Check that a required environment variable is set and not empty
-check_env_var() {
+check_var() {
     local var_name="$1"
     local var_value="${!var_name:-}"
     if [ -z "$var_value" ]; then
@@ -42,7 +42,7 @@ if [ -z "${CERT_PATH:-}" ] || [ -z "${CERT_PASSWORD:-}" ]; then
 fi
 
 # Ensure environment variable is defined
-check_env_var "BATON_AZURE_TENANT_ID"
+check_var "BATON_AZURE_TENANT_ID"
 
 # Check that the parent directory exists
 CERT_DIR="$(dirname "$CERT_PATH")"
