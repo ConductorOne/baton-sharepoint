@@ -96,7 +96,6 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			var resourceType string
 			var principalName string
 			var keyName string
-			var isOwner bool
 
 			if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
 				// Entra Groups don't have anything identifiable but their ID
@@ -105,9 +104,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 				if len(parts) < 3 {
 					return nil, "", nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
 				}
-				if strings.Contains(parts[2], "_o") {
-					isOwner = true
-				}
+
 				principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
 			} else {
 				resourceType = "user"
@@ -121,11 +118,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			}
 
 			if resourceType == "group" {
-				kind := "member"
-				if isOwner {
-					kind = "owner"
-				}
-				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 					Id: principalName,
 				})))
 			} else {
