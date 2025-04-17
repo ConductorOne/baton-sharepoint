@@ -1,9 +1,9 @@
-package cert_based_bearer_token
+package certbasedbearertoken
 
 import (
 	"crypto"
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505 -- SHA-1 required for compatibility reasons with x5t JWT
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -45,6 +45,7 @@ func generateSignedJWTFromPFX(opts JWTOptions) (string, error) {
 	nbf := opts.TimeUTCNow.Add(-opts.NotBefore).Unix()
 	exp := opts.TimeUTCNow.Add(opts.Duration).Unix()
 
+	// #nosec G401 -- SHA-1 required for thumbprint x5t in JWT
 	thumbprint := sha1.Sum(cert.Raw) // x5t is SHA-1 of DER cert
 	header := map[string]interface{}{
 		"alg": "RS256",
@@ -61,17 +62,17 @@ func generateSignedJWTFromPFX(opts JWTOptions) (string, error) {
 		"exp": exp,
 	}
 
-	headerJson, err := json.Marshal(header)
+	headerJSON, err := json.Marshal(header)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal header, error: %w", err)
 	}
 
-	payloadJson, err := json.Marshal(payload)
+	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal payload, error: %w", err)
 	}
 
-	unsigned := base64UrlEncode(headerJson) + "." + base64UrlEncode(payloadJson)
+	unsigned := base64UrlEncode(headerJSON) + "." + base64UrlEncode(payloadJSON)
 
 	hashed := sha256.Sum256([]byte(unsigned))
 	signature, err := rsa.SignPKCS1v15(nil, rsaKey, crypto.SHA256, hashed[:])

@@ -12,7 +12,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
-	cert_based_bearer_token "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
+	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
 )
 
 // shamelessly copied from https://github.com/ConductorOne/baton-microsoft-entra/
@@ -36,7 +36,7 @@ type Client struct {
 	GraphDomain   string
 	token         azcore.TokenCredential
 	http          *uhttp.BaseHttpClient
-	spTokenClient *cert_based_bearer_token.Exchange
+	spTokenClient *cbbt.Exchange
 
 	// SharePoint related stuff
 	tenantID string
@@ -117,7 +117,7 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 	return nil
 }
 
-func New(ctx context.Context, spClientToken *cert_based_bearer_token.Exchange, tenantID, clientID, clientSecret, graphDomain string) (*Client, error) {
+func New(ctx context.Context, spClientToken *cbbt.Exchange, tenantID, clientID, clientSecret, graphDomain string) (*Client, error) {
 	var cred azcore.TokenCredential
 
 	uhttpOptions := []uhttp.Option{

@@ -86,14 +86,14 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == 1 && strings.Index(user.LoginName, "membership") != -1) || // If Entra user
-			(user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1) { // or Entra group
+		if (user.PrincipalType == 1 && strings.Contains(user.LoginName, "membership")) || // If Entra user
+			(user.PrincipalType == 4 && strings.Contains(user.LoginName, "federateddirectoryclaimprovider")) { // or Entra group
 			// Baton ID
 			var resourceType string
 			var principalName string
 			var keyName string
 
-			if strings.Index(user.LoginName, "federateddirectoryclaimprovider") != -1 {
+			if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
 				// Entra Groups don't have anything identifiable but their ID
 				resourceType = "group"
 				parts := strings.Split(user.LoginName, "|")
@@ -122,7 +122,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 					Value: principalName,
 				})))
 			}
-		} else if user.PrincipalType == 4 && strings.Index(user.LoginName, "federateddirectoryclaimprovider") == -1 { // Regular grants
+		} else if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
 			userID, err := resource.NewResourceID(userResourceType, user.ODataID)
 			if err != nil {
 				return nil, "", nil, err

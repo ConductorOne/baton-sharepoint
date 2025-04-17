@@ -1,4 +1,4 @@
-package cert_based_bearer_token
+package certbasedbearertoken
 
 type MicrosoftOAuthResponse struct {
 	AccessToken string `json:"access_token"`

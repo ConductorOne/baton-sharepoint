@@ -1,4 +1,4 @@
-package cert_based_bearer_token
+package certbasedbearertoken
 
 import (
 	"context"
@@ -78,7 +78,7 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 		e.cacheBearerToken = res.AccessToken
 		e.cacheBearerTokenExp = opts.TimeUTCNow.Add(opts.Duration)
 	} else {
-		return "", fmt.Errorf("Something is wrong, Microsoft has responded with an empty token!")
+		return "", fmt.Errorf("something went wrong, Microsoft has responded with an empty token")
 	}
 
 	return res.AccessToken, nil
