@@ -73,11 +73,14 @@ func (g *groupBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId
 }
 
 func (g *groupBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+	parts := strings.Split(strings.ToLower(resource.DisplayName), " ")
+	kind := strings.TrimSuffix(parts[len(parts)-1], "s") // make the kind singular
+
 	opts := []entitlement.EntitlementOption{
 		entitlement.WithDisplayName(fmt.Sprintf("Membership to %s", resource.DisplayName)),
 	}
 
-	ent := entitlement.NewAssignmentEntitlement(resource, "member", opts...)
+	ent := entitlement.NewAssignmentEntitlement(resource, kind, opts...)
 
 	return []*v2.Entitlement{ent}, "", nil, nil
 }
@@ -87,6 +90,9 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	if err != nil {
 		return nil, "", nil, err
 	}
+
+	parts := strings.Split(strings.ToLower(rsc.DisplayName), " ")
+	kind := strings.TrimSuffix(parts[len(parts)-1], "s")
 
 	var ret []*v2.Grant
 	for _, user := range users {
@@ -118,11 +124,11 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			}
 
 			if resourceType == "group" {
-				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 					Id: principalName,
 				})))
 			} else {
-				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
+				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
 					Key:   keyName,
 					Value: principalName,
 				})))
@@ -133,7 +139,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			if err != nil {
 				return nil, "", nil, err
 			}
-			ret = append(ret, grant.NewGrant(rsc, "member", userID))
+			ret = append(ret, grant.NewGrant(rsc, kind, userID))
 		}
 	}
 
