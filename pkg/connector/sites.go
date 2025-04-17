@@ -56,7 +56,7 @@ func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagi
 	return nil, "", nil, nil
 }
 
-func newListBuilder(c *client.Client) *siteBuilder {
+func newSiteBuilder(c *client.Client) *siteBuilder {
 	return &siteBuilder{client: c}
 }
 
