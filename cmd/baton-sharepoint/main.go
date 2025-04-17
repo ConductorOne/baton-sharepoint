@@ -57,6 +57,7 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 		v.GetString(SharePointDomainField.FieldName),
 		v.GetString(CertPfxField.FieldName),
 		v.GetString(CertPasswordField.FieldName),
+		v.GetString("external-resource-c1z") != "", // NOTE(shackra): expect problems if that flag is renamed
 	)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))

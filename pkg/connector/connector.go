@@ -13,14 +13,15 @@ import (
 )
 
 type Connector struct {
-	client *client.Client
+	client           *client.Client
+	externalSyncMode bool
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		newListBuilder(d.client),
-		newGroupBuilder(d.client),
+		newSiteBuilder(d.client),
+		newGroupBuilder(d.client, d.externalSyncMode),
 		newUserBuilder(d.client),
 	}
 }
@@ -46,7 +47,7 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string) (*Connector, error) {
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID bool) (*Connector, error) {
 	spc, err := cbbt.New(ctx, sharepointDomain, cert, certpassword)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)

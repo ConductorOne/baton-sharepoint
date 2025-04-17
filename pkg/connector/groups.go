@@ -15,7 +15,8 @@ import (
 )
 
 type groupBuilder struct {
-	client *client.Client
+	client           *client.Client
+	externalSyncMode bool
 }
 
 func (g *groupBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
@@ -86,8 +87,8 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == 1 && strings.Contains(user.LoginName, "membership")) || // If Entra user
-			(user.PrincipalType == 4 && strings.Contains(user.LoginName, "federateddirectoryclaimprovider")) { // or Entra group
+		if (user.PrincipalType == 1 && strings.Contains(user.LoginName, "membership") && g.externalSyncMode) || // If Entra user
+			(user.PrincipalType == 4 && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && g.externalSyncMode) { // or Entra group
 			// Baton ID
 			var resourceType string
 			var principalName string
@@ -134,6 +135,6 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	return ret, "", nil, nil
 }
 
-func newGroupBuilder(c *client.Client) *groupBuilder {
-	return &groupBuilder{client: c}
+func newGroupBuilder(c *client.Client, externalSyncMode bool) *groupBuilder {
+	return &groupBuilder{client: c, externalSyncMode: externalSyncMode}
 }
