@@ -104,8 +104,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			var keyName string
 
 			if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
-				// Entra Groups don't have anything identifiable but their ID
-				resourceType = "group"
+				resourceType = "group" // the type of resource on Entra
 				parts := strings.Split(user.LoginName, "|")
 				if len(parts) < 3 {
 					return nil, "", nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
@@ -124,6 +123,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			}
 
 			if resourceType == "group" {
+				// FIXME(shackra): Example Store (the Microsoft 365 group) is not receiving the corresponding grant
 				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 					Id: principalName,
 				})))
