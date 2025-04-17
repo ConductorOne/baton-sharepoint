@@ -46,8 +46,17 @@ func (u *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 		for _, user := range users {
 			// ignore Entra users, Microsoft 365 Groups and "system" users
 			if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
-				ur, err := resource.NewUserResource(user.Title, userResourceType, user.ODataID, []resource.UserTraitOption{
-					resource.WithUserProfile(map[string]interface{}{"email": user.Email, "principal_type": user.PrincipalType, "site": site.DisplayName, "site_url": site.WebUrl}),
+				userID := getReasonableIDfromLoginName(user.LoginName)
+				ur, err := resource.NewUserResource(user.Title, userResourceType, userID, []resource.UserTraitOption{
+					resource.WithUserProfile(map[string]interface{}{
+						"email":           user.Email,
+						"site":            site.DisplayName,
+						"site url":        site.WebUrl,
+						"login name":      user.LoginName,
+						"site id":         user.Id,
+						"is site admin":   user.IsSiteAdmin,
+						"is hidden in ui": user.IsHiddenInUI,
+					}),
 				})
 				if err != nil {
 					return nil, "", nil, fmt.Errorf("cannot create resource from SharePoint user, err: %w", err)

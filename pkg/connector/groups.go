@@ -52,7 +52,10 @@ func (g *groupBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId
 				return nil, "", nil, err
 			}
 			g, err := resource.NewGroupResource(group.Title, groupResourceType, group.ODataID, []resource.GroupTraitOption{
-				resource.WithGroupProfile(map[string]interface{}{"site": site.DisplayName, "site_url": site.WebUrl}),
+				resource.WithGroupProfile(map[string]interface{}{
+					"site":     site.DisplayName,
+					"site url": site.WebUrl,
+				}),
 			}, resource.WithParentResourceID(siteID))
 			if err != nil {
 				return nil, "", nil, fmt.Errorf("cannot create resource from SharePoint group, err: %w", err)
@@ -93,6 +96,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			var resourceType string
 			var principalName string
 			var keyName string
+			var isOwner bool
 
 			if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
 				// Entra Groups don't have anything identifiable but their ID
@@ -100,6 +104,9 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 				parts := strings.Split(user.LoginName, "|")
 				if len(parts) < 3 {
 					return nil, "", nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
+				}
+				if strings.Contains(parts[2], "_o") {
+					isOwner = true
 				}
 				principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
 			} else {
@@ -114,7 +121,11 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			}
 
 			if resourceType == "group" {
-				ret = append(ret, grant.NewGrant(rsc, "member", principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+				kind := "member"
+				if isOwner {
+					kind = "owner"
+				}
+				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 					Id: principalName,
 				})))
 			} else {
@@ -124,7 +135,8 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 				})))
 			}
 		} else if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
-			userID, err := resource.NewResourceID(userResourceType, user.ODataID)
+			id := getReasonableIDfromLoginName(user.LoginName)
+			userID, err := resource.NewResourceID(userResourceType, id)
 			if err != nil {
 				return nil, "", nil, err
 			}
