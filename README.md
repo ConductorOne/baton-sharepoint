@@ -41,6 +41,30 @@ baton resources
 - Groups
 - Sites
 
+# Permissions
+
+- SharePoint
+  - `Sites.FullControl.All` (Application): Have full control of all site collections
+  - `Sites.Read.All` (Application): Read items in all site collections
+  - `User.Read.All` (Application): Read user profiles
+- Microsoft Graph
+  - `Sites.Read.All` (Application): Read items in all site collections
+
+## SharePoint requirements
+
+Please make a self-signed certificate and upload it to your registered
+application at *Certificates & secrets* > *Certificates*. Under
+GNU/Linux you can make a certificate with the script
+`./scripts/generate-self-signed-certificate.sh`.
+
+To generate a self-signed certificate under Microsoft Windows, use
+this
+[script](https://github.com/LucasMarangon/Azure_Oauth_JWT/blob/a66a55737eeae775c0bbe19dfbfc04e292fc7702/Create-SelfSignedCertificate.ps1)
+(update the variables in there accordingly).
+
+> [!WARNING]
+> Please note that a third-party maintains that Powershell script
+
 # Contributing, Support and Issues
 
 We started Baton because we were tired of taking screenshots and manually
