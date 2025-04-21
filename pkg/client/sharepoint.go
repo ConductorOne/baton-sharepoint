@@ -81,7 +81,6 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 		uhttp.WithBearerToken(bearer),
 	}
 
-	// TODO(shackra): this may need pagination
 	url.Path = path.Join(url.Path, "Users")
 
 	req, err := c.http.NewRequest(ctx, http.MethodGet, url, reqOpts...)
@@ -123,7 +122,6 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 		uhttp.WithBearerToken(bearer),
 	}
 
-	// TODO(shackra): this may need pagination
 	url.Path = path.Join(url.Path, "_api/web/siteusers")
 
 	req, err := c.http.NewRequest(ctx, http.MethodGet, url, reqOpts...)
