@@ -14,6 +14,9 @@ import (
 
 // Documentation: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-rest-reference/dn531432(v=office.15)
 
+// NOTE(shackra): SharePoint REST API has no support for server-side pagination except, maybe, for List and List Items. The alternative is client-side
+//                pagination.
+
 func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]SharePointSiteGroup, error) {
 	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
 		ClientID:   c.clientID,
