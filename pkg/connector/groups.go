@@ -123,7 +123,6 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 			}
 
 			if resourceType == "group" {
-				// FIXME(shackra): Example Store (the Microsoft 365 group) is not receiving the corresponding grant
 				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 					Id: principalName,
 				})))
