@@ -129,8 +129,9 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 				})))
 			} else {
 				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
-					Key:   keyName,
-					Value: principalName,
+					Key:          keyName,
+					Value:        principalName,
+					ResourceType: v2.ResourceType_TRAIT_USER,
 				})))
 			}
 		} else if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
