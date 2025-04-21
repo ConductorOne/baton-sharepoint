@@ -58,5 +58,5 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)
 	}
 
-	return &Connector{client: c}, nil
+	return &Connector{client: c, externalSyncMode: activateBatonID}, nil
 }
