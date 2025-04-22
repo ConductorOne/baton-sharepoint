@@ -51,6 +51,8 @@
               curl
               jq
               toybox
+              delve
+              gdlv
 
               baton.packages.${pkgs.system}.default
 
