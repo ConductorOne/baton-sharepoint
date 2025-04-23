@@ -51,8 +51,8 @@ jobs:
       BATON_SHAREPOINT_DOMAIN: ${{ vars.BATON_SHAREPOINT_DOMAIN }}
       # The following parameters are passed to grant/revoke commands
       # Change these to the correct IDs for your test data
-      CONNECTOR_ENTITLEMENT: 'sharepoint_group:https://conductoroneinsulatorone.sharepoint.com/_api/Web/SiteGroups/GetById(3):owner'
-      CONNECTOR_PRINCIPAL: '9aa7af32-a3a3-43e4-9fed-5adfe32259f4'
+      CONNECTOR_ENTITLEMENT: 'sharepoint_group:https://conductoroneinsulatorone.sharepoint.com/sites/contentTypeHub/_api/Web/SiteGroups/GetById(3):owner'
+      CONNECTOR_PRINCIPAL: 'tenant|1765af64-8106-4545-b6be-9644a4ea8fa4'
     steps:
       - name: Install Go
         uses: actions/setup-go@v5
