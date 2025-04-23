@@ -63,6 +63,6 @@ openssl req -x509 -new -key "${CERT_PATH}.key" -out "${CERT_PATH}.crt" -days "$D
 openssl pkcs12 -export -out "${CERT_PATH}.pfx" -inkey "${CERT_PATH}.key" -in "${CERT_PATH}.crt" -passout "pass:$CERT_PASSWORD"
 
 # Clean up intermediate files
-rm "${CERT_PATH}.key" "${CERT_PATH}.crt"
+rm "${CERT_PATH}.key"
 
 echo "Certificate successfully created: ${CERT_PATH}.pfx"
