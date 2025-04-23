@@ -39,8 +39,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    environment:
-        name: Testing
     env:
       BATON_LOG_LEVEL: debug
       BATON_AZURE_CLIENT_SECRET: ${{ secrets.BATON_AZURE_CLIENT_SECRET }}
