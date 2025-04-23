@@ -39,14 +39,20 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    environment:
+        name: Testing
     env:
       BATON_LOG_LEVEL: debug
+      BATON_AZURE_CLIENT_SECRET: ${{ secrets.BATON_AZURE_CLIENT_SECRET }}
+      BATON_PFX_CERTIFICATE: ${{ secrets.BATON_PFX_CERTIFICATE }}
+      BATON_PFX_CERTIFICATE_PASSWORD: ${{ secrets.BATON_PFX_CERTIFICATE_PASSWORD }}
+      BATON_AZURE_CLIENT_ID: ${{ vars.BATON_AZURE_CLIENT_ID }}
+      BATON_AZURE_TENANT_ID: ${{ vars.BATON_AZURE_TENANT_ID }}
+      BATON_SHAREPOINT_DOMAIN: ${{ vars.BATON_SHAREPOINT_DOMAIN }}
       # The following parameters are passed to grant/revoke commands
       # Change these to the correct IDs for your test data
-      #CONNECTOR_GRANT: 'grant:entitlement:group:1234:member:user:9876'
       CONNECTOR_ENTITLEMENT: 'sharepoint_group:https://conductoroneinsulatorone.sharepoint.com/_api/Web/SiteGroups/GetById(3):owner'
       CONNECTOR_PRINCIPAL: '9aa7af32-a3a3-43e4-9fed-5adfe32259f4'
-      # CONNECTOR_PRINCIPAL_TYPE: 'user'
     steps:
       - name: Install Go
         uses: actions/setup-go@v5
