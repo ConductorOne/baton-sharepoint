@@ -76,6 +76,8 @@ github.com/conductorone/baton-sdk v0.2.92 h1:2Mna9uD6HzlzdYXmnkRK5YVkVSCQVn8jfE4
 github.com/conductorone/baton-sdk v0.2.92/go.mod h1:nUgHSAf9P0lfamti5NlOSpeh1t99UNzMjIwf0I7n4/g=
 github.com/conductorone/baton-sdk v0.2.94 h1:tF8z+Dnu2Q6ro67gYS0JabIi1MIihypo0+RjlWgI5jI=
 github.com/conductorone/baton-sdk v0.2.94/go.mod h1:nUgHSAf9P0lfamti5NlOSpeh1t99UNzMjIwf0I7n4/g=
+github.com/conductorone/baton-sdk v0.2.95 h1:zZ5tSTIfNnCUGiw8rooBWKS3GFTK61q1CI/bltihWqQ=
+github.com/conductorone/baton-sdk v0.2.95/go.mod h1:nUgHSAf9P0lfamti5NlOSpeh1t99UNzMjIwf0I7n4/g=
 github.com/conductorone/dpop v0.2.3 h1:s91U3845GHQ6P6FWrdNr2SEOy1ES/jcFs1JtKSl2S+o=
 github.com/conductorone/dpop v0.2.3/go.mod h1:gyo8TtzB9SCFCsjsICH4IaLZ7y64CcrDXMOPBwfq/3s=
 github.com/conductorone/dpop/integrations/dpop_grpc v0.2.3 h1:kLMCNIh0Mo2vbvvkCmJ3ixsPbXEJ6HPcW53Ku9yje3s=
