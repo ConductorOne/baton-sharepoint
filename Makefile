@@ -24,5 +24,9 @@ add-dep:
 	go mod vendor
 
 .PHONY: lint
-lint:
+lint: format
 	golangci-lint run
+
+.PHONY: format
+format:
+	@golangci-lint fmt # don't bother me about bad formatting, just fix it!

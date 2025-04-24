@@ -47,8 +47,25 @@
             packages = with pkgs; [
               go
               nil
+              gomodifytags
+              curl
+              jq
+              toybox
+              delve
+              gdlv
 
               baton.packages.${pkgs.system}.default
+
+              # writes a script and make it available in $PATH
+              (pkgs.writeShellScriptBin "baton-get-jwt" (builtins.readFile ./scripts/get-microsoft-graph-jwt.sh))
+
+              (pkgs.writeShellScriptBin "baton-generate-pfx-cert" (
+                builtins.readFile ./scripts/generate-self-signed-certificate.sh
+              ))
+
+              (pkgs.writeShellScriptBin "baton-get-sharepoint-bearer-token" (
+                builtins.readFile ./scripts/get-sharepoint-bearer-token.sh
+              ))
             ];
 
             # Environment variables

@@ -17,3 +17,6 @@
 dist/
 
 .direnv/
+*.pfx
+*.key
+*.crt
