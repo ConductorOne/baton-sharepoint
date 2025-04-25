@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"sync"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -41,6 +43,10 @@ type Client struct {
 	// SharePoint related stuff
 	tenantID string
 	clientID string
+
+	digestValuePerSite    map[string]string
+	digestValueExpiration map[string]time.Time
+	digestMutex           sync.Mutex
 }
 
 type QueryOption func(*queryOptions)
