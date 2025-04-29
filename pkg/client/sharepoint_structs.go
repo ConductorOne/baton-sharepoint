@@ -54,6 +54,15 @@ type SharePointUser struct {
 	PrincipalType int `json:"PrincipalType"`
 }
 
+type SharePointAddThingMetadata struct {
+	Type string `json:"type"`
+}
+
+type SharePointAddThingRequest struct {
+	Metadata  SharePointAddThingMetadata `json:"__metadata"`
+	LoginName string                     `json:"LoginName"`
+}
+
 // Local Variables:
 // go-tag-args: ("-transform" "pascalcase")
 // End:

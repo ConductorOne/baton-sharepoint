@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
@@ -138,4 +140,130 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 	resp.Body.Close()
 
 	return data.Value, nil
+}
+
+func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL string, groupID, thingID int) error {
+	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
+		ClientID:   c.clientID,
+		TenantID:   c.tenantID,
+		TimeUTCNow: time.Now().UTC(),
+		Duration:   1 * time.Hour,
+		NotBefore:  5 * time.Minute,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+	}
+
+	site, err := guessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	url, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithContentTypeFormHeader(),
+		uhttp.WithBearerToken(bearer),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Delete"),
+		uhttp.WithFormBody(""),
+	}
+
+	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/removebyid(%d)", groupID, thingID))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
+}
+
+var (
+	userLoginName        = []string{"i:0#.f", "membership"}
+	groupLoginName       = []string{"c:0o.c", "federateddirectoryclaimprovider"}
+	rolemanagerLoginName = []string{"c:0-.f"}
+	tenantLoginName      = []string{"c:0t.c"}
+	allUsersWindows      = []string{"c:0!.s"}
+)
+
+func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string, groupID int, thingID string) error {
+	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
+		ClientID:   c.clientID,
+		TenantID:   c.tenantID,
+		TimeUTCNow: time.Now().UTC(),
+		Duration:   1 * time.Hour,
+		NotBefore:  5 * time.Minute,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+	}
+
+	site, err := guessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	url, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	loginName := thingID                // let's say this is just `c:0(.s|true`...
+	if strings.Contains(thingID, "@") { // nvm, is an user!
+		loginName = strings.Join(append(userLoginName, thingID), "|")
+	} else if strings.HasPrefix(thingID, "rolemanager") { // nvm, is a special user like "Everyone except external users"
+		loginName = strings.Join(append(rolemanagerLoginName, thingID), "|")
+	} else if strings.HasPrefix(thingID, "tenant") { // nvm, is a special user like "Global Administrator"
+		loginName = strings.Join(append(tenantLoginName, thingID), "|")
+	} else if thingID == "windows" { // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
+		loginName = strings.Join(append(allUsersWindows, thingID), "|")
+	} else if ok, err := regexp.MatchString(`([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)`, thingID); err == nil || ok { // nvm, it may be a M365 group!
+		if err != nil {
+			return err
+		}
+		loginName = strings.Join(append(groupLoginName, thingID), "|")
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+		uhttp.WithContentTypeJSONHeader(),
+		uhttp.WithBearerToken(bearer),
+		uhttp.WithJSONBody(&SharePointAddThingRequest{
+			Metadata:  SharePointAddThingMetadata{Type: "SP.User"},
+			LoginName: loginName,
+		}),
+	}
+
+	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users", groupID))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
 }
