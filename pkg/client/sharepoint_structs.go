@@ -21,8 +21,10 @@ const (
 )
 
 func (t UserOrGroupPrincipalType) String() string {
-	value := "None"
+	value := ""
 	switch t {
+	case None:
+		value = "None"
 	case User:
 		value = "User"
 	case DistributionList:
