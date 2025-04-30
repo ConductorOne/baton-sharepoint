@@ -49,7 +49,6 @@ func (u *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 				userID := getReasonableIDfromLoginName(user.LoginName)
 				ur, err := resource.NewUserResource(user.Title, userResourceType, userID, []resource.UserTraitOption{
 					resource.WithUserProfile(map[string]interface{}{
-						"email":           user.Email,
 						"site":            site.DisplayName,
 						"site url":        site.WebUrl,
 						"login name":      user.LoginName,
@@ -57,6 +56,7 @@ func (u *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 						"is site admin":   user.IsSiteAdmin,
 						"is hidden in ui": user.IsHiddenInUI,
 					}),
+					resource.WithEmail(user.Email, true),
 				})
 				if err != nil {
 					return nil, "", nil, fmt.Errorf("cannot create resource from SharePoint user, err: %w", err)
