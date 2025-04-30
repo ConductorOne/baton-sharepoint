@@ -76,21 +76,6 @@ type SharePointUserId struct {
 	NameIdIssuer string
 }
 
-type SharePointSiteUser struct {
-	ODataType                      string                   `json:"odata.type"`
-	ODataID                        string                   `json:"odata.id"`
-	Id                             int                      `json:"Id"`
-	LoginName                      string                   `json:"LoginName"`
-	Title                          string                   `json:"Title"`
-	Email                          string                   `json:"Email"`
-	IsEmailAuthenticationGuestUser bool                     `json:"IsEmailAuthenticationGuestUser"`
-	IsShareByEmailGuestUser        bool                     `json:"IsShareByEmailGuestUser"`
-	IsSiteAdmin                    bool                     `json:"IsSiteAdmin"`
-	UserId                         *SharePointUserId        `json:"UserId"`
-	UserPrincipalName              string                   `json:"UserPrincipalName"`
-	PrincipalType                  UserOrGroupPrincipalType `json:"PrincipalType"`
-}
-
 // SharePointSiteUser is a SP.User
 // documentation: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-rest-reference/dn531432(v=office.15)#user-properties
 type SharePointUser struct {
@@ -104,6 +89,11 @@ type SharePointUser struct {
 	LoginName     string                   `json:"LoginName"`     // Gets the login name of the user.
 	IsHiddenInUI  bool                     `json:"IsHiddenInUI"`  // Gets a value that indicates whether this member should be hidden in the UI.
 	PrincipalType UserOrGroupPrincipalType `json:"PrincipalType"` // Gets a value containing the type of the principal. Represents a bitwise SP.PrincipalType
+
+	// Set if the SharePoint site reports them as such
+	IsEmailAuthenticationGuestUser bool   `json:"IsEmailAuthenticationGuestUser"`
+	IsShareByEmailGuestUser        bool   `json:"IsShareByEmailGuestUser"`
+	UserPrincipalName              string `json:"UserPrincipalName"`
 }
 
 // Local Variables:

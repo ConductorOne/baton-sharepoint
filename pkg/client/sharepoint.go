@@ -60,7 +60,7 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	return data.Value, nil
 }
 
-func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID string) ([]SharePointSiteUser, error) {
+func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID string) ([]SharePointUser, error) {
 	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
 		ClientID:   c.clientID,
 		TenantID:   c.tenantID,
