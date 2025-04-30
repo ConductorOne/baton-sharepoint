@@ -45,7 +45,7 @@ func (u *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 
 		for _, user := range users {
 			// ignore Entra users, Microsoft 365 Groups and "system" users
-			if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
+			if user.PrincipalType == client.SecurityGroup && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
 				userID := getReasonableIDfromLoginName(user.LoginName)
 				ur, err := resource.NewUserResource(user.Title, userResourceType, userID, []resource.UserTraitOption{
 					resource.WithUserProfile(map[string]interface{}{

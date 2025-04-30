@@ -55,6 +55,7 @@ func (g *groupBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId
 				resource.WithGroupProfile(map[string]interface{}{
 					"site":     site.DisplayName,
 					"site url": site.WebUrl,
+					"id":       group.Id,
 				}),
 			}, resource.WithParentResourceID(siteID))
 			if err != nil {
@@ -96,8 +97,8 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == 1 && strings.Contains(user.LoginName, "membership") && g.externalSyncMode) || // If Entra user
-			(user.PrincipalType == 4 && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && g.externalSyncMode) { // or Entra group
+		if (user.PrincipalType == client.User && strings.Contains(user.LoginName, "membership") && g.externalSyncMode) || // If Entra user
+			(user.PrincipalType == client.SecurityGroup && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && g.externalSyncMode) { // or Entra group
 			// Baton ID
 			var resourceType string
 			var principalName string
@@ -133,7 +134,7 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 					ResourceType: v2.ResourceType_TRAIT_USER,
 				})))
 			}
-		} else if user.PrincipalType == 4 && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
+		} else if user.PrincipalType == client.SecurityGroup && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
 			id := getReasonableIDfromLoginName(user.LoginName)
 			userID, err := resource.NewResourceID(userResourceType, id)
 			if err != nil {
