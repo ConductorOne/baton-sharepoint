@@ -12,6 +12,8 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 )
 
 type groupBuilder struct {
@@ -91,60 +93,76 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	if err != nil {
 		return nil, "", nil, err
 	}
+	l := ctxzap.Extract(ctx)
 
 	parts := strings.Split(strings.ToLower(rsc.DisplayName), " ")
 	kind := strings.TrimSuffix(parts[len(parts)-1], "s")
 
 	var ret []*v2.Grant
 	for _, user := range users {
-		if (user.PrincipalType == client.User && strings.Contains(user.LoginName, "membership") && g.externalSyncMode) || // If Entra user
-			(user.PrincipalType == client.SecurityGroup && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && g.externalSyncMode) { // or Entra group
-			// Baton ID
-			var resourceType string
-			var principalName string
-			var keyName string
-
-			if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
-				resourceType = "group" // the type of resource on Entra
-				parts := strings.Split(user.LoginName, "|")
-				if len(parts) < 3 {
-					return nil, "", nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
-				}
-
-				principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
-			} else {
-				resourceType = "user"
-				principalName = user.UserPrincipalName
-				keyName = "userPrincipalName"
+		granted, err := grantHelper(user, g.externalSyncMode, kind, rsc)
+		if err != nil {
+			if strings.Contains(err.Error(), "unrecognized user '") {
+				l.Info("skipping unrecognized principal due to error", zap.Error(err))
+				continue
 			}
-
-			principal := &v2.ResourceId{
-				ResourceType: resourceType,
-				Resource:     principalName,
-			}
-
-			if resourceType == "group" {
-				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
-					Id: principalName,
-				})))
-			} else {
-				ret = append(ret, grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
-					Key:          keyName,
-					Value:        principalName,
-					ResourceType: v2.ResourceType_TRAIT_USER,
-				})))
-			}
-		} else if user.PrincipalType == client.SecurityGroup && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
-			id := getReasonableIDfromLoginName(user.LoginName)
-			userID, err := resource.NewResourceID(userResourceType, id)
-			if err != nil {
-				return nil, "", nil, err
-			}
-			ret = append(ret, grant.NewGrant(rsc, kind, userID))
+			return nil, "", nil, fmt.Errorf("groupBuilder.Grants: failed to grant entitlement, error: %w", err)
 		}
+		ret = append(ret, granted)
 	}
 
 	return ret, "", nil, nil
+}
+
+func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string, rsc *v2.Resource) (*v2.Grant, error) {
+	if (user.PrincipalType == client.User && strings.Contains(user.LoginName, "membership") && externalSyncMode) || // If Entra user
+		(user.PrincipalType == client.SecurityGroup && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && externalSyncMode) { // or Entra group
+		// Baton ID
+		var resourceType string
+		var principalName string
+		var keyName string
+
+		if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
+			resourceType = "group" // the type of resource on Entra
+			parts := strings.Split(user.LoginName, "|")
+			if len(parts) < 3 {
+				return nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
+			}
+
+			principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
+		} else {
+			resourceType = "user"
+			principalName = user.UserPrincipalName
+			keyName = "userPrincipalName"
+		}
+
+		principal := &v2.ResourceId{
+			ResourceType: resourceType,
+			Resource:     principalName,
+		}
+
+		if resourceType == "group" {
+			return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+				Id: principalName,
+			})), nil
+		} else {
+			return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
+				Key:          keyName,
+				Value:        principalName,
+				ResourceType: v2.ResourceType_TRAIT_USER,
+			})), nil
+		}
+	} else if user.PrincipalType == client.SecurityGroup && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
+		id := getReasonableIDfromLoginName(user.LoginName)
+		userID, err := resource.NewResourceID(userResourceType, id)
+		if err != nil {
+			return nil, err
+		}
+
+		return grant.NewGrant(rsc, kind, userID), nil
+	}
+
+	return nil, fmt.Errorf("grantHelper: unrecognized user '%s' of principal type %s", user.LoginName, user.PrincipalType)
 }
 
 func newGroupBuilder(c *client.Client, externalSyncMode bool) *groupBuilder {
