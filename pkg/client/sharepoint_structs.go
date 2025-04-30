@@ -2,21 +2,21 @@ package client
 
 // UserOrGroupPrincipalType Specifies the type of a principal for either Users or Groups
 // documentation: https://learn.microsoft.com/en-us/previous-versions/office/sharepoint-csom/ee541430(v=office.15)#members
-// Note(shackra): Please note that the bitwise operation is not implemented yet
+// Note(shackra): Please note that the bitwise operation is not implemented yet.
 type UserOrGroupPrincipalType int
 
 const (
-	// Enumeration whose value specifies no principal type
+	// Enumeration whose value specifies no principal type.
 	None UserOrGroupPrincipalType = iota
-	// Enumeration whose value specifies a user as the principal type
+	// Enumeration whose value specifies a user as the principal type.
 	User
-	// Enumeration whose value specifies a distribution list as the principal type
+	// Enumeration whose value specifies a distribution list as the principal type.
 	DistributionList
-	// Enumeration whose value specifies a security group as the principal type
+	// Enumeration whose value specifies a security group as the principal type.
 	SecurityGroup = 4
-	// Enumeration whose value specifies a group (2) as the principal type
+	// Enumeration whose value specifies a group (2) as the principal type.
 	SharePointGroup = 8
-	// Enumeration whose value specifies all principal types
+	// Enumeration whose value specifies all principal types.
 	All = 15
 )
 
