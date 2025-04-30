@@ -10,6 +10,7 @@ import (
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
+	"github.com/conductorone/baton-sharepoint/pkg/errorexplained"
 )
 
 // Documentation: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-rest-reference/dn531432(v=office.15)
@@ -48,9 +49,10 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	}
 
 	var data ListGroupsForSiteResponse
-	resp, err := c.http.Do(req, uhttp.WithResponse(&data))
+	var queryErr errorexplained.ErrorExplained
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, err
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
 	}
 
 	resp.Body.Close()
@@ -89,9 +91,10 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	}
 
 	var data ListUsersInGroupByGroupIDResponse
-	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	var queryErr errorexplained.ErrorExplained
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, err
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
 	}
 
 	resp.Body.Close()
@@ -130,9 +133,10 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 	}
 
 	var data ListUsersResponse
-	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	var queryErr errorexplained.ErrorExplained
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, err
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
 	}
 
 	resp.Body.Close()

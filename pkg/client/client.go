@@ -13,6 +13,7 @@ import (
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
+	"github.com/conductorone/baton-sharepoint/pkg/errorexplained"
 )
 
 // shamelessly copied from https://github.com/ConductorOne/baton-microsoft-entra/
@@ -102,14 +103,17 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 		return err
 	}
 
-	doOptions := []uhttp.DoOption{}
+	var queryErr errorexplained.ErrorExplained
+	doOptions := []uhttp.DoOption{
+		uhttp.WithErrorResponse(&queryErr),
+	}
 	if res != nil {
 		doOptions = append(doOptions, uhttp.WithJSONResponse(res))
 	}
 
 	resp, err := c.http.Do(req, doOptions...)
 	if err != nil {
-		return err
+		return errorexplained.WhatErrorToReturn(queryErr, err)
 	}
 
 	defer resp.Body.Close()
@@ -135,6 +139,7 @@ func New(ctx context.Context, spClientToken *cbbt.Exchange, tenantID, clientID, 
 		Transport: httpClient,
 	}
 
+	// we cannot use errorexplained package with `cred`, azidentity has full control of the authentication flow
 	cred, err = azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, &azidentity.ClientSecretCredentialOptions{
 		ClientOptions: options,
 	})

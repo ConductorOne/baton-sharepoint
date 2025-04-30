@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
+	"github.com/conductorone/baton-sharepoint/pkg/errorexplained"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
@@ -66,10 +67,10 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 		return "", err
 	}
 
-	var oauthErr TokenExchangeError
+	var oauthErr errorexplained.ErrorExplained
 	resp, err := e.http.Do(req, uhttp.WithJSONResponse(res), uhttp.WithErrorResponse(&oauthErr))
 	if err != nil {
-		return "", err
+		return "", errorexplained.WhatErrorToReturn(oauthErr, err)
 	}
 
 	resp.Body.Close()
