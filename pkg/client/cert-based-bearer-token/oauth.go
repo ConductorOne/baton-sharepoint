@@ -66,12 +66,12 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 		return "", err
 	}
 
-	resp, err := e.http.Do(req, uhttp.WithJSONResponse(res))
+	var oauthErr TokenExchangeError
+	resp, err := e.http.Do(req, uhttp.WithJSONResponse(res), uhttp.WithErrorResponse(&oauthErr))
 	if err != nil {
 		return "", err
 	}
 
-	// TODO(shackra): check the StatusCode?
 	resp.Body.Close()
 
 	if res.AccessToken != "" {
