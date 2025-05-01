@@ -63,7 +63,7 @@ func (o *siteBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *
 }
 
 func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	users, err := o.client.ListSharePointUsers(ctx, rsc.ParentResourceId.Resource)
+	users, err := o.client.ListSharePointUsers(ctx, rsc.Id.Resource)
 	if err != nil {
 		return nil, "", nil, fmt.Errorf("siteBuilder.Grants: cannot list users, error: %w", err)
 	}
@@ -95,16 +95,17 @@ func newSiteBuilder(c *client.Client, externalSyncMode bool) *siteBuilder {
 
 func convertSite2Resource(site client.Site) (*v2.Resource, error) {
 	profile := map[string]any{
-		"display name": site.DisplayName,
-		"name":         site.Name,
-		"url":          site.WebUrl,
+		"display name":       site.DisplayName,
+		"name":               site.Name,
+		"url":                site.WebUrl,
+		"microsoft graph ID": site.ID,
 	}
 
 	opts := []resource.GroupTraitOption{
 		resource.WithGroupProfile(profile),
 	}
 
-	rsc, err := resource.NewGroupResource(site.DisplayName, siteResourceType, site.ID, opts)
+	rsc, err := resource.NewGroupResource(site.DisplayName, siteResourceType, site.WebUrl, opts)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make resource from Site '%s', error: %w", site.DisplayName, err)
 	}

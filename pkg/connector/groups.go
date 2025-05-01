@@ -49,7 +49,7 @@ func (g *groupBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId
 		}
 
 		for _, group := range groups {
-			siteID, err := resource.NewResourceID(siteResourceType, site.ID)
+			siteID, err := resource.NewResourceID(siteResourceType, site.WebUrl)
 			if err != nil {
 				return nil, "", nil, err
 			}
