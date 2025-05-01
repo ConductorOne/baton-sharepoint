@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
@@ -56,8 +58,11 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	}
 
 	resp.Body.Close()
+	filtered := slices.DeleteFunc(data.Value, func(spg SharePointSiteGroup) bool {
+		return strings.HasPrefix(spg.Title, "SharePointHome OrgLinks")
+	})
 
-	return data.Value, nil
+	return filtered, nil
 }
 
 func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID string) ([]SharePointUser, error) {
