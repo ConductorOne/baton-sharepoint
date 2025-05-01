@@ -70,7 +70,7 @@ func (e *Exchange) GetBearerToken(ctx context.Context, opts JWTOptions) (string,
 	var oauthErr errorexplained.ErrorExplained
 	resp, err := e.http.Do(req, uhttp.WithJSONResponse(res), uhttp.WithErrorResponse(&oauthErr))
 	if err != nil {
-		return "", errorexplained.WhatErrorToReturn(oauthErr, err)
+		return "", errorexplained.WhatErrorToReturn(oauthErr, err, "")
 	}
 
 	resp.Body.Close()

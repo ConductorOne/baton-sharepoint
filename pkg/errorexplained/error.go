@@ -26,8 +26,13 @@ func (t *ErrorExplained) Message() string {
 	return t.ErrorType + ": " + t.Description
 }
 
-func WhatErrorToReturn(expl ErrorExplained, err error) error {
-	if expl.Description == "" {
+func WhatErrorToReturn(expl ErrorExplained, err error, altExplanation string) error {
+	if expl.Description == "" { // if we don't get any error as JSON in the response
+		// but the message received is plain text
+		if altExplanation != "" {
+			return fmt.Errorf("%s. Complete error message: %w", altExplanation, err)
+		}
+
 		return err
 	}
 

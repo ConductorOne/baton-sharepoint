@@ -52,7 +52,7 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	var queryErr errorexplained.ErrorExplained
 	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err, "")
 	}
 
 	resp.Body.Close()
@@ -94,7 +94,11 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	var queryErr errorexplained.ErrorExplained
 	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
+		altMessage := ""
+		if strings.Contains(err.Error(), "403 Forbidden") {
+			altMessage = fmt.Sprintf("access to the user list of group '%s' was denied, are we trying to list users of a 'special' group?", groupURLID)
+		}
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err, altMessage)
 	}
 
 	resp.Body.Close()
@@ -136,7 +140,12 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 	var queryErr errorexplained.ErrorExplained
 	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
-		return nil, errorexplained.WhatErrorToReturn(queryErr, err)
+		altMessage := ""
+		if resp != nil && resp.StatusCode == http.StatusUnauthorized {
+			altMessage = ("cannot list SharePoint site users, check that admin consent was " +
+				"granted for API permission SharePoint > User.Read.All for your registered app")
+		}
+		return nil, errorexplained.WhatErrorToReturn(queryErr, err, altMessage)
 	}
 
 	resp.Body.Close()

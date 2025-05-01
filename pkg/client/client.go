@@ -113,7 +113,7 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 
 	resp, err := c.http.Do(req, doOptions...)
 	if err != nil {
-		return errorexplained.WhatErrorToReturn(queryErr, err)
+		return errorexplained.WhatErrorToReturn(queryErr, err, "")
 	}
 
 	defer resp.Body.Close()
