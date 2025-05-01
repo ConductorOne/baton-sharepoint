@@ -44,9 +44,7 @@ baton resources
 # Permissions
 
 - SharePoint
-  - `Sites.FullControl.All` (Application): Have full control of all site collections
   - `Sites.Read.All` (Application): Read items in all site collections
-  - `User.Read.All` (Application): Read user profiles
 - Microsoft Graph
   - `Sites.Read.All` (Application): Read items in all site collections
 
