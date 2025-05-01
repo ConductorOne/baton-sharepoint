@@ -8,10 +8,9 @@ import (
 	"path"
 	"slices"
 	"strings"
-	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
-	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
 	"github.com/conductorone/baton-sharepoint/pkg/errorexplained"
 )
 
@@ -21,15 +20,11 @@ import (
 //                pagination.
 
 func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]SharePointSiteGroup, error) {
-	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
-		ClientID:   c.clientID,
-		TenantID:   c.tenantID,
-		TimeUTCNow: time.Now().UTC(),
-		Duration:   1 * time.Hour,
-		NotBefore:  5 * time.Minute,
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+		return nil, fmt.Errorf("Client.ListGroupsForSite: failed to fetch bearer token, error: %w", err)
 	}
 
 	url, err := url.Parse(siteWebURL)
@@ -40,7 +35,7 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
 		uhttp.WithContentTypeJSONHeader(),
-		uhttp.WithBearerToken(bearer),
+		uhttp.WithBearerToken(bearer.Token),
 	}
 
 	url.Path = path.Join(url.Path, "/_api/web/sitegroups")
@@ -66,15 +61,11 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 }
 
 func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID string) ([]SharePointUser, error) {
-	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
-		ClientID:   c.clientID,
-		TenantID:   c.tenantID,
-		TimeUTCNow: time.Now().UTC(),
-		Duration:   1 * time.Hour,
-		NotBefore:  5 * time.Minute,
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+		return nil, fmt.Errorf("Client.ListUsersInGroupByGroupID: failed to fetch bearer token, error: %w", err)
 	}
 
 	url, err := url.Parse(groupURLID)
@@ -85,7 +76,7 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
 		uhttp.WithContentTypeJSONHeader(),
-		uhttp.WithBearerToken(bearer),
+		uhttp.WithBearerToken(bearer.Token),
 	}
 
 	url.Path = path.Join(url.Path, "Users")
@@ -112,15 +103,11 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 }
 
 func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]SharePointUser, error) {
-	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
-		ClientID:   c.clientID,
-		TenantID:   c.tenantID,
-		TimeUTCNow: time.Now().UTC(),
-		Duration:   1 * time.Hour,
-		NotBefore:  5 * time.Minute,
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+		return nil, fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
 	}
 
 	url, err := url.Parse(siteWebURL)
@@ -131,7 +118,7 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
 		uhttp.WithContentTypeJSONHeader(),
-		uhttp.WithBearerToken(bearer),
+		uhttp.WithBearerToken(bearer.Token),
 	}
 
 	url.Path = path.Join(url.Path, "_api/web/siteusers")

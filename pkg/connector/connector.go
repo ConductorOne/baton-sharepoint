@@ -9,7 +9,6 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
-	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
 )
 
 type Connector struct {
@@ -48,12 +47,7 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 
 // New returns a new instance of the connector.
 func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID bool) (*Connector, error) {
-	spc, err := cbbt.New(ctx, sharepointDomain, cert, certpassword)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make connector, error: %w", err)
-	}
-
-	c, err := client.New(ctx, spc, tenantID, clientID, clientSecret, graphDomain)
+	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)
 	}
