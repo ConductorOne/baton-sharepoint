@@ -35,7 +35,7 @@ func (d *Connector) Asset(ctx context.Context, asset *v2.AssetRef) (string, io.R
 func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 	return &v2.ConnectorMetadata{
 		DisplayName: "Baton SharePoint",
-		Description: "",
+		Description: "Baton connector for Microsoft® SharePoint™",
 	}, nil
 }
 
