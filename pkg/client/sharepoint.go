@@ -54,7 +54,7 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 
 	resp.Body.Close()
 
-	if c.dontFilteroutSharePointHomeOrgLinks {
+	if c.dontFilterSharePointSpecialGroups {
 		return data.Value, nil
 	}
 
@@ -96,9 +96,9 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data), uhttp.WithErrorResponse(&queryErr))
 	if err != nil {
 		altMessage := ""
-		if strings.Contains(err.Error(), "403 Forbidden") && !c.dontFilteroutSharePointHomeOrgLinks {
+		if strings.Contains(err.Error(), "403 Forbidden") && !c.dontFilterSharePointSpecialGroups {
 			altMessage = fmt.Sprintf("access to the user list of group '%s' was denied, are we trying to list users of a 'special' group?", groupURLID)
-		} else if strings.Contains(err.Error(), "403 Forbidden") && c.dontFilteroutSharePointHomeOrgLinks {
+		} else if strings.Contains(err.Error(), "403 Forbidden") && c.dontFilterSharePointSpecialGroups {
 			altMessage = fmt.Sprintf("access to the user list of group '%s' was denied, check that admin consent was "+
 				"granted for API permission SharePoint > Sites.FullControl.All for your registered app", groupURLID)
 		}

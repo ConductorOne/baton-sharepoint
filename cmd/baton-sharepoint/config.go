@@ -14,8 +14,8 @@ var (
 	CertPfxField           = field.StringField("pfx-certificate", field.WithDescription("Base64-encoded PFX certificate"), field.WithRequired(true))
 	CertPasswordField      = field.StringField("pfx-certificate-password", field.WithDescription("Password of the PFX certificate"), field.WithRequired(true))
 	SyncOrgLinkGroupsField = field.BoolField(
-		"sync-special-groups",
-		field.WithDescription("Don't filter out groups like 'SharePointHome Org Links', permission 'SharePoint > Sites.FullControl.All' is required"),
+		"sync-orglink-groups",
+		field.WithDescription("Don't filter groups like 'SharePointHome Org Links', permission 'SharePoint > Sites.FullControl.All' is required"),
 	)
 )
 

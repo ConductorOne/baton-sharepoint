@@ -53,7 +53,7 @@ type Client struct {
 	// if this is set to true, the costumer needs to grant the permission
 	// SharePoint > Sites.FullControl.All; that's basically full admin
 	// rights over all SharePoint sites!
-	dontFilteroutSharePointHomeOrgLinks bool
+	dontFilterSharePointSpecialGroups bool
 }
 
 type QueryOption func(*queryOptions)
@@ -194,13 +194,13 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 	}
 
 	return &Client{
-		token:                               cred,
-		certbasedToken:                      certcred,
-		http:                                http,
-		GraphDomain:                         graphDomain,
-		tenantID:                            tenantID,
-		clientID:                            clientID,
-		sharePointDomain:                    sharepointDomain,
-		dontFilteroutSharePointHomeOrgLinks: syncSharePointHomeOrgLinks,
+		token:                             cred,
+		certbasedToken:                    certcred,
+		http:                              http,
+		GraphDomain:                       graphDomain,
+		tenantID:                          tenantID,
+		clientID:                          clientID,
+		sharePointDomain:                  sharepointDomain,
+		dontFilterSharePointSpecialGroups: syncSharePointHomeOrgLinks,
 	}, nil
 }
