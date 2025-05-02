@@ -47,6 +47,13 @@ type Client struct {
 	tenantID         string
 	clientID         string
 	sharePointDomain string
+
+	// SharePointHome OrgLinks groups related stuff
+	//
+	// if this is set to true, the costumer needs to grant the permission
+	// SharePoint > Sites.FullControl.All; that's basically full admin
+	// rights over all SharePoint sites!
+	dontFilteroutSharePointHomeOrgLinks bool
 }
 
 type QueryOption func(*queryOptions)
@@ -126,7 +133,7 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 	return nil
 }
 
-func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, pfxCert, pfxCertPassword string) (*Client, error) {
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, pfxCert, pfxCertPassword string, syncSharePointHomeOrgLinks bool) (*Client, error) {
 	uhttpOptions := []uhttp.Option{
 		uhttp.WithLogger(true, ctxzap.Extract(ctx)),
 	}
@@ -187,12 +194,13 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 	}
 
 	return &Client{
-		token:            cred,
-		certbasedToken:   certcred,
-		http:             http,
-		GraphDomain:      graphDomain,
-		tenantID:         tenantID,
-		clientID:         clientID,
-		sharePointDomain: sharepointDomain,
+		token:                               cred,
+		certbasedToken:                      certcred,
+		http:                                http,
+		GraphDomain:                         graphDomain,
+		tenantID:                            tenantID,
+		clientID:                            clientID,
+		sharePointDomain:                    sharepointDomain,
+		dontFilteroutSharePointHomeOrgLinks: syncSharePointHomeOrgLinks,
 	}, nil
 }

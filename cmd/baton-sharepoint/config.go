@@ -6,13 +6,17 @@ import (
 )
 
 var (
-	TenantIDField         = field.StringField("azure-tenant-id", field.WithDescription("Azure Tenant ID"), field.WithRequired(true))
-	ClientIDField         = field.StringField("azure-client-id", field.WithDescription("Azure Client ID"), field.WithRequired(true))
-	ClientSecretField     = field.StringField("azure-client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
-	GraphDomainField      = field.StringField("azure-graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
-	SharePointDomainField = field.StringField("sharepoint-domain", field.WithDescription("Domain of SharePoint"), field.WithRequired(true))
-	CertPfxField          = field.StringField("pfx-certificate", field.WithDescription("Base64-encoded PFX certificate"), field.WithRequired(true))
-	CertPasswordField     = field.StringField("pfx-certificate-password", field.WithDescription("Password of the PFX certificate"), field.WithRequired(true))
+	TenantIDField          = field.StringField("azure-tenant-id", field.WithDescription("Azure Tenant ID"), field.WithRequired(true))
+	ClientIDField          = field.StringField("azure-client-id", field.WithDescription("Azure Client ID"), field.WithRequired(true))
+	ClientSecretField      = field.StringField("azure-client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
+	GraphDomainField       = field.StringField("azure-graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
+	SharePointDomainField  = field.StringField("sharepoint-domain", field.WithDescription("Domain of SharePoint"), field.WithRequired(true))
+	CertPfxField           = field.StringField("pfx-certificate", field.WithDescription("Base64-encoded PFX certificate"), field.WithRequired(true))
+	CertPasswordField      = field.StringField("pfx-certificate-password", field.WithDescription("Password of the PFX certificate"), field.WithRequired(true))
+	SyncOrgLinkGroupsField = field.BoolField(
+		"sync-special-groups",
+		field.WithDescription("Don't filter out groups like 'SharePointHome Org Links', permission 'SharePoint > Sites.FullControl.All' is required"),
+	)
 )
 
 var (
@@ -27,6 +31,7 @@ var (
 		SharePointDomainField,
 		CertPfxField,
 		CertPasswordField,
+		SyncOrgLinkGroupsField,
 	}
 
 	// FieldRelationships defines relationships between the fields listed in

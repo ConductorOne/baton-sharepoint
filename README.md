@@ -44,7 +44,10 @@ baton resources
 # Permissions
 
 - SharePoint
-  - `Sites.Read.All` (Application): Read items in all site collections
+  - If you don't plan on sync'ing special SharePoint groups like 'SharePointHome Org Links':
+	- `Sites.Read.All` (Application): Read items in all site collections
+  - Otherwise just grant this permission:
+	- `Sites.FullControl.All` (Application): Allows the app to have full control of all site collections without a signed in user
 - Microsoft Graph
   - `Sites.Read.All` (Application): Read items in all site collections
 

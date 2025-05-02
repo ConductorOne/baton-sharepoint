@@ -46,8 +46,8 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID bool) (*Connector, error) {
-	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword)
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID, syncSharePointHomeOrgLinks bool) (*Connector, error) {
+	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword, syncSharePointHomeOrgLinks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)
 	}
