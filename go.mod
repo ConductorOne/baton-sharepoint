@@ -7,12 +7,13 @@ toolchain go1.23.8
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.2
-	github.com/conductorone/baton-sdk v0.2.95
+	github.com/conductorone/baton-sdk v0.2.96
 	github.com/ennyjfrick/ruleguard-logfatal v0.0.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
+	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
 require (
@@ -127,5 +128,4 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
 	modernc.org/sqlite v1.34.5 // indirect
-	software.sslmate.com/src/go-pkcs12 v0.5.0 // indirect
 )
