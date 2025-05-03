@@ -3,10 +3,34 @@
   "resourceTypeCapabilities": [
     {
       "resourceType": {
-        "id": "user",
-        "displayName": "User",
+        "id": "sharepoint_group",
+        "displayName": "SharePoint Group",
+        "traits": [
+          "TRAIT_GROUP"
+        ]
+      },
+      "capabilities": [
+        "CAPABILITY_SYNC"
+      ]
+    },
+    {
+      "resourceType": {
+        "id": "sharepoint_user",
+        "displayName": "SharePoint User",
         "traits": [
           "TRAIT_USER"
+        ]
+      },
+      "capabilities": [
+        "CAPABILITY_SYNC"
+      ]
+    },
+    {
+      "resourceType": {
+        "id": "site",
+        "displayName": "Site",
+        "traits": [
+          "TRAIT_GROUP"
         ]
       },
       "capabilities": [
