@@ -2,19 +2,26 @@ package connector
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
+	"github.com/conductorone/baton-sharepoint/pkg/client"
 )
 
-type Connector struct{}
+type Connector struct {
+	client           *client.Client
+	externalSyncMode bool
+}
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		newUserBuilder(),
+		newSiteBuilder(d.client, d.externalSyncMode),
+		newGroupBuilder(d.client, d.externalSyncMode),
+		newUserBuilder(d.client),
 	}
 }
 
@@ -27,8 +34,8 @@ func (d *Connector) Asset(ctx context.Context, asset *v2.AssetRef) (string, io.R
 // Metadata returns metadata about the connector.
 func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 	return &v2.ConnectorMetadata{
-		DisplayName: "My Baton Connector",
-		Description: "The template implementation of a baton connector",
+		DisplayName: "Baton SharePoint",
+		Description: "Baton connector for Microsoft® SharePoint™",
 	}, nil
 }
 
@@ -39,6 +46,11 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context) (*Connector, error) {
-	return &Connector{}, nil
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID, syncSharePointHomeOrgLinks bool) (*Connector, error) {
+	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword, syncSharePointHomeOrgLinks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make connector, error: %w", err)
+	}
+
+	return &Connector{client: c, externalSyncMode: activateBatonID}, nil
 }

@@ -4,9 +4,20 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 )
 
-// The user resource type is for all user objects from the database.
+var siteResourceType = &v2.ResourceType{
+	Id:          "site",
+	DisplayName: "Site",
+	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
+}
+
+var groupResourceType = &v2.ResourceType{
+	Id:          "sharepoint_group",
+	DisplayName: "SharePoint Group",
+	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
+}
+
 var userResourceType = &v2.ResourceType{
-	Id:          "user",
-	DisplayName: "User",
+	Id:          "sharepoint_user",
+	DisplayName: "SharePoint User",
 	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_USER},
 }

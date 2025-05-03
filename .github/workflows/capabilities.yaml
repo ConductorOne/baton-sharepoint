@@ -9,6 +9,13 @@ jobs:
   calculate-capabilities:
     runs-on: ubuntu-latest
 
+    env:
+      BATON_AZURE_CLIENT_SECRET: ${{ secrets.BATON_AZURE_CLIENT_SECRET }}
+      BATON_PFX_CERTIFICATE: ${{ secrets.BATON_PFX_CERTIFICATE }}
+      BATON_PFX_CERTIFICATE_PASSWORD: ${{ secrets.BATON_PFX_CERTIFICATE_PASSWORD }}
+      BATON_AZURE_CLIENT_ID: ${{ vars.BATON_AZURE_CLIENT_ID }}
+      BATON_AZURE_TENANT_ID: ${{ vars.BATON_AZURE_TENANT_ID }}
+      BATON_SHAREPOINT_DOMAIN: ${{ vars.BATON_SHAREPOINT_DOMAIN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
