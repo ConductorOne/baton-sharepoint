@@ -114,6 +114,14 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	return ret, "", nil, nil
 }
 
+func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
+	return nil, nil, nil
+}
+
+func (g *groupBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	return nil, nil
+}
+
 func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string, rsc *v2.Resource) (*v2.Grant, error) {
 	if (user.PrincipalType == client.User && strings.Contains(user.LoginName, "membership") && externalSyncMode) || // If Entra user
 		(user.PrincipalType == client.SecurityGroup && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && externalSyncMode) { // or Entra group
