@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
-	cbbt "github.com/conductorone/baton-sharepoint/pkg/client/cert-based-bearer-token"
 )
 
 const (
@@ -41,20 +41,16 @@ func (c *Client) getFormDigestValue(ctx context.Context, site string) (string, e
 		return "", err
 	}
 
-	bearer, err := c.spTokenClient.GetBearerToken(ctx, cbbt.JWTOptions{
-		ClientID:   c.clientID,
-		TenantID:   c.tenantID,
-		TimeUTCNow: time.Now().UTC(),
-		Duration:   1 * time.Hour,
-		NotBefore:  5 * time.Minute,
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to fetch bearer token for SharePoint REST API, error: %w", err)
+		return "", fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
 	}
 
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
-		uhttp.WithBearerToken(bearer),
+		uhttp.WithBearerToken(bearer.Token),
 		uhttp.WithFormBody(""),
 	}
 
