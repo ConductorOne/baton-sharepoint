@@ -246,6 +246,7 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 	}
 
 	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
 		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
 		uhttp.WithBearerToken(bearer.Token),
 		uhttp.WithJSONBody(&SharePointAddThingRequest{
