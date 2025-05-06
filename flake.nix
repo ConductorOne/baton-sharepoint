@@ -71,6 +71,7 @@
             # Environment variables
             env = {
               BATON_DEBUG_PRINT_RESPONSE_BODY = ""; # use non-empty value to activate
+              CGO_CFLAGS = "-Wno-error=cpp"; # for debugging with dlv/gdlv
             };
           };
         }
