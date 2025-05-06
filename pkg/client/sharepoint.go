@@ -247,12 +247,12 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
-		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
 		uhttp.WithBearerToken(bearer.Token),
 		uhttp.WithJSONBody(&SharePointAddThingRequest{
 			Metadata:  SharePointAddThingMetadata{Type: "SP.User"},
 			LoginName: loginName,
 		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
 	}
 
 	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users", groupID))
