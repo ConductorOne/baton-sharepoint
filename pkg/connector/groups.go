@@ -2,7 +2,10 @@ package connector
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
@@ -114,8 +117,52 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	return ret, "", nil, nil
 }
 
+var findGroupIDregexp = regexp.MustCompile(`SiteGroups/GetById\((\d+)\)`)
+
 func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
-	return nil, nil, nil
+	l := ctxzap.Extract(ctx)
+	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != "user" {
+		return nil, nil, errors.New("only users and Microsoft 365 Groups can be granted membership to SharePoint site groups")
+	}
+
+	siteURL, err := client.GuessSharePointSiteWebURLBase(entitlement.Resource.ParentResourceId.Resource)
+	if err != nil {
+		return nil, nil, fmt.Errorf("groupBuilder.Grant: an error happened when guessing the site URL from the principal resource ID: %w", err)
+	}
+
+	foundID := "-1"
+	l.Info("sharepoint site group", zap.String("entitlement", entitlement.Resource.Id.Resource))
+	matches := findGroupIDregexp.FindStringSubmatch(entitlement.Resource.Id.Resource)
+	if len(matches) > 1 {
+		foundID = matches[1]
+	}
+
+	groupID, err := strconv.Atoi(foundID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("groupBuilder.Grant: invalid Site group ID found '%s', error: %w", foundID, err)
+	}
+
+	principalID := principal.Id.Resource
+
+	if principal.Id.ResourceType == "user" {
+		trait, err := resource.GetUserTrait(principal)
+		if err != nil {
+			return nil, nil, fmt.Errorf("groupBuilder.Grant: cannot get user trait annotation, error: %w", err)
+		}
+
+		if len(trait.Emails) > 0 {
+			principalID = strings.ToLower(trait.Emails[0].Address)
+		}
+	}
+
+	l.Info("principal ID", zap.String("resource ID", principalID))
+	_, err = g.client.AddThingToGroupByThingID(ctx, siteURL, groupID, principalID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("groupBuilder.Grant: there was an error when attempting to grant an entitlement: %w", err)
+	}
+	return []*v2.Grant{
+		grant.NewGrant(entitlement.Resource, "", principal.Id),
+	}, nil, nil
 }
 
 func (g *groupBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// guessSharePointSiteWebURLBase gives you the web URL of a SharePoint site
+// GuessSharePointSiteWebURLBase gives you the web URL of a SharePoint site
 //
 // Imagine you have the following URL:
 //
@@ -19,7 +19,7 @@ import (
 //
 // It helps to figure out what's the root of a site and then do something else with
 // that string, for example, build the URL path for an API call, etc.
-func guessSharePointSiteWebURLBase(site string) (string, error) {
+func GuessSharePointSiteWebURLBase(site string) (string, error) {
 	web, err := url.Parse(site)
 	if err != nil {
 		return "", err

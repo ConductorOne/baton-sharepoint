@@ -162,7 +162,7 @@ func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL s
 		return fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
 	}
 
-	site, err := guessSharePointSiteWebURLBase(siteWebURL)
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
 	if err != nil {
 		return err
 	}
@@ -211,22 +211,22 @@ var (
 	allUsersWindows      = []string{"c:0!.s"}
 )
 
-func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string, groupID int, thingID string) error {
+func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string, groupID int, thingID string) (*SharePointUser, error) {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
+		return nil, fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
 	}
 
-	site, err := guessSharePointSiteWebURLBase(siteWebURL)
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	url, err := url.Parse(site)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	loginName := thingID                // let's say this is just `c:0(.s|true`...
@@ -240,7 +240,7 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 		loginName = strings.Join(append(allUsersWindows, thingID), "|")
 	} else if ok, err := regexp.MatchString(`([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)`, thingID); err == nil || ok { // nvm, it may be a M365 group!
 		if err != nil {
-			return err
+			return nil, err
 		}
 		loginName = strings.Join(append(groupLoginName, thingID), "|")
 	}
@@ -259,15 +259,16 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 
 	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resp, err := c.http.Do(req)
+	var data SharePointUser
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp.Body.Close()
 
-	return nil
+	return &data, nil
 }
