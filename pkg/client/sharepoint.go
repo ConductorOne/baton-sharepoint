@@ -234,7 +234,7 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 		loginName = strings.Join(append(userLoginName, thingID), "|")
 	} else if strings.HasPrefix(thingID, "rolemanager") { // nvm, is a special user like "Everyone except external users"
 		loginName = strings.Join(append(rolemanagerLoginName, thingID), "|")
-	} else if strings.HasPrefix(thingID, "tenant") { // nvm, is a special user like "Global Administrator"
+	} else if strings.HasPrefix(thingID, "tenant") { // nvm, is a Microsoft 365 group!
 		loginName = strings.Join(append(tenantLoginName, thingID), "|")
 	} else if thingID == "windows" { // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
 		loginName = strings.Join(append(allUsersWindows, thingID), "|")
