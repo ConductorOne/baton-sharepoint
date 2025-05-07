@@ -272,3 +272,61 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 
 	return &data, nil
 }
+
+// EnsureUserByUserPrincipalName ask the SharePoint site to give an ID to a user by its User Principal Name.
+func (c *Client) EnsureUserByUserPrincipalName(ctx context.Context, siteWebURL, logonName string) (*SharePointUser, error) {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Client.EnsureUserByUserPrincipalName: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(site)
+	if err != nil {
+		return nil, err
+	}
+
+	thing := strings.Join(append(userLoginName, logonName), "|")
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithJSONBody(&SharePointEnsureThingRequest{
+			LogonName: thing,
+		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+	}
+
+	u.Path = path.Join(u.Path, "_api/web/ensureuser")
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, u, reqOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var data SharePointUser
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Body.Close()
+
+	return &data, nil
+}
+
+// EnsureUserByUserID ask the SharePoint site to give an ID to a user.
+func (c *Client) EnsureUserByUserID(ctx context.Context, siteWebURL, userID string) (*SharePointUser, error) {
+	user, err := c.GetUserPrincipalNameFromUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("Client.EnsureUserByUserID: failed to get user principal name for user ID '%s', error: %w", userID, err)
+	}
+
+	return c.EnsureUserByUserPrincipalName(ctx, siteWebURL, user)
+}

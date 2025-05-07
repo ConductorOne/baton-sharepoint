@@ -105,6 +105,10 @@ type SharePointAddThingRequest struct {
 	LoginName string                     `json:"LoginName"`
 }
 
+type SharePointEnsureThingRequest struct {
+	LogonName string `json:"logonName"`
+}
+
 // Local Variables:
 // go-tag-args: ("-transform" "pascalcase")
 // End:
