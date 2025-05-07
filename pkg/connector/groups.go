@@ -19,6 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const userConst = "user"
+
 type groupBuilder struct {
 	client           *client.Client
 	externalSyncMode bool
@@ -121,7 +123,7 @@ var findGroupIDregexp = regexp.MustCompile(`SiteGroups/GetById\((\d+)\)`)
 
 func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
-	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != "user" {
+	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != userConst {
 		return nil, nil, errors.New("only users and Microsoft 365 Groups can be granted membership to SharePoint site groups")
 	}
 
@@ -144,7 +146,7 @@ func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitl
 
 	principalID := principal.Id.Resource
 
-	if principal.Id.ResourceType == "user" {
+	if principal.Id.ResourceType == userConst {
 		trait, err := resource.GetUserTrait(principal)
 		if err != nil {
 			return nil, nil, fmt.Errorf("groupBuilder.Grant: cannot get user trait annotation, error: %w", err)
@@ -186,7 +188,7 @@ func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string,
 
 			principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
 		} else {
-			resourceType = "user"
+			resourceType = userConst
 			principalName = user.UserPrincipalName
 			keyName = "userPrincipalName"
 		}
