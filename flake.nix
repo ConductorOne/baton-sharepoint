@@ -66,6 +66,10 @@
               (pkgs.writeShellScriptBin "baton-get-sharepoint-bearer-token" (
                 builtins.readFile ./scripts/get-sharepoint-bearer-token.sh
               ))
+
+              (pkgs.writeShellScriptBin "baton-get-sharepoint-digestform" (
+                builtins.readFile ./scripts/get-sharepoint-digestform-value.sh
+              ))
             ];
 
             # Environment variables
