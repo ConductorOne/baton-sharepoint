@@ -123,7 +123,7 @@ var findGroupIDregexp = regexp.MustCompile(`SiteGroups/GetById\((\d+)\)`)
 
 func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
-	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != userConst {
+	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != userConst && principal.Id.ResourceType != "group" {
 		return nil, nil, errors.New("only users and Microsoft 365 Groups can be granted membership to SharePoint site groups")
 	}
 
