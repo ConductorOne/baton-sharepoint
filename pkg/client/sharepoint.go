@@ -202,6 +202,58 @@ func (c *Client) RemoveUserFromGroupByUserID(ctx context.Context, siteWebURL str
 	return nil
 }
 
+// RemoveUserByLoginName removes a user from a SharePoint group by its login name.
+//
+// This method supports partial login names, it will try its best to figure out the complete login name.
+func (c *Client) RemoveUserByLoginName(ctx context.Context, siteWebURL string, groupID int, loginName string) error {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return fmt.Errorf("Client.RemoveUserByLoginName: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	requestURL, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithContentTypeFormHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Patch"),
+		uhttp.WithFormBody(""),
+	}
+
+	fullLoginName := guessFullLoginName(loginName)
+	requestURL.Path = path.Join(requestURL.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/RemoveByLoginName('%s')", groupID, url.PathEscape(fullLoginName)))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, requestURL, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
+}
 
 // AddUserToGroupByUserID add a user to a SharePoint group by its login name.
 //
