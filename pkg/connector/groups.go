@@ -147,14 +147,10 @@ func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitl
 	principalID := principal.Id.Resource
 
 	if principal.Id.ResourceType == userConst {
-		trait, err := resource.GetUserTrait(principal)
-		if err != nil {
-			return nil, nil, fmt.Errorf("groupBuilder.Grant: cannot get user trait annotation, error: %w", err)
-		}
-
-		if len(trait.Emails) > 0 {
-			principalID = strings.ToLower(trait.Emails[0].Address)
-		}
+		// TODO(shackra): use g.client.GetUserPrincipalNameFromUserID to get the user's principal name
+	} else if principal.Id.ResourceType == "group" {
+		// NOTE(shackra): M365 Groups have `tenant` in their SharePoint site's ID
+		principalID = "tenant|" + principalID
 	}
 
 	l.Info("principal ID", zap.String("resource ID", principalID))
@@ -162,12 +158,15 @@ func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitl
 	if err != nil {
 		return nil, nil, fmt.Errorf("groupBuilder.Grant: there was an error when attempting to grant an entitlement: %w", err)
 	}
+
 	return []*v2.Grant{
+		// FIXME(shackra): maybe we can re-use `grantHelper` here instead?
 		grant.NewGrant(entitlement.Resource, "", principal.Id),
 	}, nil, nil
 }
 
 func (g *groupBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	// TODO(shackra): use g.client.RemoveUserFromGroupByUserID here
 	return nil, nil
 }
 
