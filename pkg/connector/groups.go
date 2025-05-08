@@ -158,7 +158,7 @@ func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitl
 	}
 
 	l.Info("principal ID", zap.String("resource ID", principalID))
-	_, err = g.client.AddThingToGroupByThingID(ctx, siteURL, groupID, principalID)
+	_, err = g.client.AddUserToGroupByUserID(ctx, siteURL, groupID, principalID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("groupBuilder.Grant: there was an error when attempting to grant an entitlement: %w", err)
 	}

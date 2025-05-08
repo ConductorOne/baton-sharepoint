@@ -153,12 +153,12 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 	return data.Value, nil
 }
 
-func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL string, groupID, thingID int) error {
+func (c *Client) RemoveUserFromGroupByUserID(ctx context.Context, siteWebURL string, groupID, spUserID int) error {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
+		return fmt.Errorf("Client.RemoveUserFromGroupByUserID: failed to fetch bearer token, error: %w", err)
 	}
 
 	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
@@ -185,7 +185,7 @@ func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL s
 		uhttp.WithFormBody(""),
 	}
 
-	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/removebyid(%d)", groupID, thingID))
+	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/removebyid(%d)", groupID, spUserID))
 
 	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
 	if err != nil {
@@ -203,12 +203,15 @@ func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL s
 }
 
 
-func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string, groupID int, thingID string) (*SharePointUser, error) {
+// AddUserToGroupByUserID add a user to a SharePoint group by its login name.
+//
+// This method supports partial login names, it will try its best to figure out the complete login name.
+func (c *Client) AddUserToGroupByUserID(ctx context.Context, siteWebURL string, groupID int, thingID string) (*SharePointUser, error) {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
+		return nil, fmt.Errorf("Client.AddUserToGroupByUserID: failed to fetch bearer token, error: %w", err)
 	}
 
 	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
