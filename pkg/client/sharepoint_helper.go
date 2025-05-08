@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -39,4 +40,31 @@ func GuessSharePointSiteWebURLBase(site string) (string, error) {
 	}
 
 	return web.String(), nil
+}
+
+var (
+	userLoginName        = []string{"i:0#.f", "membership"}
+	groupLoginName       = []string{"c:0o.c", "federateddirectoryclaimprovider"}
+	rolemanagerLoginName = []string{"c:0-.f"}
+	tenantLoginName      = []string{"c:0t.c"}
+	allUsersWindows      = []string{"c:0!.s"}
+
+	looksLikeUUID = regexp.MustCompile(`([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)`)
+)
+
+func guessFullLoginName(partialLoginName string) string {
+	loginName := partialLoginName                // let's say this is just `c:0(.s|true`...
+	if strings.Contains(partialLoginName, "@") { // nvm, is an user!
+		loginName = strings.Join(append(userLoginName, partialLoginName), "|")
+	} else if strings.HasPrefix(partialLoginName, "rolemanager") { // nvm, is a special user like "Everyone except external users"
+		loginName = strings.Join(append(rolemanagerLoginName, partialLoginName), "|")
+	} else if strings.HasPrefix(partialLoginName, "tenant") { // nvm, is a Microsoft 365 group!
+		loginName = strings.Join(append(tenantLoginName, partialLoginName), "|")
+	} else if partialLoginName == "windows" { // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
+		loginName = strings.Join(append(allUsersWindows, partialLoginName), "|")
+	} else if looksLikeUUID.MatchString(partialLoginName) { // nvm, it may be a M365 group!
+		loginName = strings.Join(append(groupLoginName, partialLoginName), "|")
+	}
+
+	return loginName
 }

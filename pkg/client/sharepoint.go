@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -203,13 +202,6 @@ func (c *Client) RemoveThingFromGroupByThingID(ctx context.Context, siteWebURL s
 	return nil
 }
 
-var (
-	userLoginName        = []string{"i:0#.f", "membership"}
-	groupLoginName       = []string{"c:0o.c", "federateddirectoryclaimprovider"}
-	rolemanagerLoginName = []string{"c:0-.f"}
-	tenantLoginName      = []string{"c:0t.c"}
-	allUsersWindows      = []string{"c:0!.s"}
-)
 
 func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string, groupID int, thingID string) (*SharePointUser, error) {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
@@ -229,21 +221,7 @@ func (c *Client) AddThingToGroupByThingID(ctx context.Context, siteWebURL string
 		return nil, err
 	}
 
-	loginName := thingID                // let's say this is just `c:0(.s|true`...
-	if strings.Contains(thingID, "@") { // nvm, is an user!
-		loginName = strings.Join(append(userLoginName, thingID), "|")
-	} else if strings.HasPrefix(thingID, "rolemanager") { // nvm, is a special user like "Everyone except external users"
-		loginName = strings.Join(append(rolemanagerLoginName, thingID), "|")
-	} else if strings.HasPrefix(thingID, "tenant") { // nvm, is a Microsoft 365 group!
-		loginName = strings.Join(append(tenantLoginName, thingID), "|")
-	} else if thingID == "windows" { // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
-		loginName = strings.Join(append(allUsersWindows, thingID), "|")
-	} else if ok, err := regexp.MatchString(`([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)-([^-\s]+)`, thingID); err == nil || ok { // nvm, it may be a M365 group!
-		if err != nil {
-			return nil, err
-		}
-		loginName = strings.Join(append(groupLoginName, thingID), "|")
-	}
+	loginName := guessFullLoginName(thingID)
 
 	reqOpts := []uhttp.RequestOption{
 		uhttp.WithAcceptJSONHeader(),
