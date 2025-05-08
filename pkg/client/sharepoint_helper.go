@@ -53,16 +53,18 @@ var (
 )
 
 func guessFullLoginName(partialLoginName string) string {
-	loginName := partialLoginName                // let's say this is just `c:0(.s|true`...
-	if strings.Contains(partialLoginName, "@") { // nvm, is an user!
+	loginName := partialLoginName // let's say this is just `c:0(.s|true`...
+
+	switch {
+	case strings.Contains(partialLoginName, "@"): // nvm, is a user!
 		loginName = strings.Join(append(userLoginName, partialLoginName), "|")
-	} else if strings.HasPrefix(partialLoginName, "rolemanager") { // nvm, is a special user like "Everyone except external users"
+	case strings.HasPrefix(partialLoginName, "rolemanager"): // nvm, is a special user like "Everyone except external users"
 		loginName = strings.Join(append(rolemanagerLoginName, partialLoginName), "|")
-	} else if strings.HasPrefix(partialLoginName, "tenant") { // nvm, is a Microsoft 365 group!
+	case strings.HasPrefix(partialLoginName, "tenant"): // nvm, is a Microsoft 365 group!
 		loginName = strings.Join(append(tenantLoginName, partialLoginName), "|")
-	} else if partialLoginName == "windows" { // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
+	case partialLoginName == "windows": // nvm, is "All Users (Windows)" for sites that act as Microsoft 365 groups (i.e.: Example Store site)
 		loginName = strings.Join(append(allUsersWindows, partialLoginName), "|")
-	} else if looksLikeUUID.MatchString(partialLoginName) { // nvm, it may be a M365 group!
+	case looksLikeUUID.MatchString(partialLoginName): // nvm, it may be a M365 group!
 		loginName = strings.Join(append(groupLoginName, partialLoginName), "|")
 	}
 

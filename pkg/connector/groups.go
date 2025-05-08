@@ -19,7 +19,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const userConst = "user"
+const (
+	userConst  = "user"
+	groupConst = "group"
+)
 
 type groupBuilder struct {
 	client           *client.Client
@@ -123,7 +126,7 @@ var findGroupIDregexp = regexp.MustCompile(`SiteGroups/GetById\((\d+)\)`)
 
 func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
-	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != userConst && principal.Id.ResourceType != "group" {
+	if principal.Id.ResourceType != userResourceType.Id && principal.Id.ResourceType != userConst && principal.Id.ResourceType != groupConst {
 		return nil, nil, errors.New("only users and Microsoft 365 Groups can be granted membership to SharePoint site groups")
 	}
 
@@ -146,9 +149,11 @@ func (g *groupBuilder) Grant(ctx context.Context, principal *v2.Resource, entitl
 
 	principalID := principal.Id.Resource
 
-	if principal.Id.ResourceType == userConst {
-		// TODO(shackra): use g.client.GetUserPrincipalNameFromUserID to get the user's principal name
-	} else if principal.Id.ResourceType == "group" {
+	// Catering to SharePoint Online REST API may be needed for some cases
+	switch principal.Id.ResourceType {
+	case userConst:
+	// TODO(shackra): use g.client.GetUserPrincipalNameFromUserID to get the user's principal name
+	case groupConst:
 		// NOTE(shackra): M365 Groups have `tenant` in their SharePoint site's ID
 		principalID = "tenant|" + principalID
 	}
@@ -179,7 +184,7 @@ func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string,
 		var keyName string
 
 		if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
-			resourceType = "group" // the type of resource on Entra
+			resourceType = groupConst // the type of resource on Entra
 			parts := strings.Split(user.LoginName, "|")
 			if len(parts) < 3 {
 				return nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
@@ -197,7 +202,7 @@ func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string,
 			Resource:     principalName,
 		}
 
-		if resourceType == "group" {
+		if resourceType == groupConst {
 			return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
 				Id: principalName,
 			})), nil
