@@ -282,7 +282,7 @@ func (c *Client) AddUserToGroupByUserID(ctx context.Context, siteWebURL string, 
 		uhttp.WithAcceptJSONHeader(),
 		uhttp.WithBearerToken(bearer.Token),
 		uhttp.WithJSONBody(&SharePointAddThingRequest{
-			Metadata:  SharePointAddThingMetadata{Type: "SP.User"},
+			Metadata:  SharePointMetadata{Type: "SP.User"},
 			LoginName: loginName,
 		}),
 		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
@@ -362,4 +362,61 @@ func (c *Client) EnsureUserByUserID(ctx context.Context, siteWebURL, userID stri
 	}
 
 	return c.EnsureUserByUserPrincipalName(ctx, siteWebURL, user)
+}
+
+// SetUserAdminStatus changes the admin status of an user.
+func (c *Client) SetUserAdminStatus(ctx context.Context, siteWebURL, userID string, value bool) error {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return fmt.Errorf("Client.SetUserAdminStatus: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	requestURL, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Merge"),
+		uhttp.WithJSONBody(&SharePointSetUserAdminStatusRequest{
+			Metadata: SharePointMetadata{
+				Type: "SP.User",
+			},
+			IsSiteAdmin: value,
+		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+	}
+
+	fullLoginName := guessFullLoginName(userID)
+
+	requestURL.Path = path.Join(requestURL.Path, fmt.Sprintf("_api/web/siteusers(%s)", url.QueryEscape(fullLoginName)))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, requestURL, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
 }

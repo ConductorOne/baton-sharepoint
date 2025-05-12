@@ -96,17 +96,32 @@ type SharePointUser struct {
 	UserPrincipalName              string `json:"UserPrincipalName"`
 }
 
-type SharePointAddThingMetadata struct {
+type SharePointMetadata struct {
 	Type string `json:"type"`
 }
 
 type SharePointAddThingRequest struct {
-	Metadata  SharePointAddThingMetadata `json:"__metadata"`
-	LoginName string                     `json:"LoginName"`
+	Metadata  SharePointMetadata `json:"__metadata"`
+	LoginName string             `json:"LoginName"`
 }
 
 type SharePointEnsureThingRequest struct {
 	LogonName string `json:"logonName"`
+}
+
+type SharePointSetUserAdminStatusRequest struct {
+	Metadata    SharePointMetadata `json:"__metadata"`
+	IsSiteAdmin bool               `json:"IsSiteAdmin"`
+}
+
+type SharePointErrorResponse struct {
+	Error struct {
+		Code    string `json:"code"`
+		Message struct {
+			Lang  string `json:"lang"`
+			Value string `json:"value"`
+		} `json:"message"`
+	} `json:"error"`
 }
 
 // Local Variables:
