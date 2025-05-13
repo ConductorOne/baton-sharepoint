@@ -152,3 +152,271 @@ func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]
 
 	return data.Value, nil
 }
+
+func (c *Client) RemoveUserFromGroupByUserID(ctx context.Context, siteWebURL string, groupID, spUserID int) error {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return fmt.Errorf("Client.RemoveUserFromGroupByUserID: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	url, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithContentTypeFormHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Delete"),
+		uhttp.WithFormBody(""),
+	}
+
+	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/removebyid(%d)", groupID, spUserID))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
+}
+
+// RemoveUserByLoginName removes a user from a SharePoint group by its login name.
+//
+// This method supports partial login names, it will try its best to figure out the complete login name.
+func (c *Client) RemoveUserByLoginName(ctx context.Context, siteWebURL string, groupID int, loginName string) error {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return fmt.Errorf("Client.RemoveUserByLoginName: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	requestURL, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithContentTypeFormHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Patch"),
+		uhttp.WithFormBody(""),
+	}
+
+	fullLoginName := guessFullLoginName(loginName)
+	requestURL.Path = path.Join(requestURL.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users/RemoveByLoginName('%s')", groupID, url.PathEscape(fullLoginName)))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, requestURL, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
+}
+
+// AddUserToGroupByUserID add a user to a SharePoint group by its login name.
+//
+// This method supports partial login names, it will try its best to figure out the complete login name.
+func (c *Client) AddUserToGroupByUserID(ctx context.Context, siteWebURL string, groupID int, thingID string) (*SharePointUser, error) {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Client.AddUserToGroupByUserID: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return nil, err
+	}
+
+	url, err := url.Parse(site)
+	if err != nil {
+		return nil, err
+	}
+
+	loginName := guessFullLoginName(thingID)
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithJSONBody(&SharePointAddThingRequest{
+			Metadata:  SharePointMetadata{Type: "SP.User"},
+			LoginName: loginName,
+		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+	}
+
+	url.Path = path.Join(url.Path, fmt.Sprintf("_api/web/sitegroups(%d)/users", groupID))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, url, reqOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var data SharePointUser
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Body.Close()
+
+	return &data, nil
+}
+
+// EnsureUserByUserPrincipalName ask the SharePoint site to give an ID to a user by its User Principal Name.
+func (c *Client) EnsureUserByUserPrincipalName(ctx context.Context, siteWebURL, logonName string) (*SharePointUser, error) {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Client.EnsureUserByUserPrincipalName: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(site)
+	if err != nil {
+		return nil, err
+	}
+
+	thing := strings.Join(append(userLoginName, logonName), "|")
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithJSONBody(&SharePointEnsureThingRequest{
+			LogonName: thing,
+		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+	}
+
+	u.Path = path.Join(u.Path, "_api/web/ensureuser")
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, u, reqOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var data SharePointUser
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Body.Close()
+
+	return &data, nil
+}
+
+// EnsureUserByUserID ask the SharePoint site to give an ID to a user.
+func (c *Client) EnsureUserByUserID(ctx context.Context, siteWebURL, userID string) (*SharePointUser, error) {
+	user, err := c.GetUserPrincipalNameFromUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("Client.EnsureUserByUserID: failed to get user principal name for user ID '%s', error: %w", userID, err)
+	}
+
+	return c.EnsureUserByUserPrincipalName(ctx, siteWebURL, user)
+}
+
+// SetUserAdminStatus changes the admin status of an user.
+func (c *Client) SetUserAdminStatus(ctx context.Context, siteWebURL, userID string, value bool) error {
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return fmt.Errorf("Client.SetUserAdminStatus: failed to fetch bearer token, error: %w", err)
+	}
+
+	site, err := GuessSharePointSiteWebURLBase(siteWebURL)
+	if err != nil {
+		return err
+	}
+
+	requestURL, err := url.Parse(site)
+	if err != nil {
+		return err
+	}
+
+	digest, err := c.getFormDigestValue(ctx, site)
+	if err != nil {
+		return err
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithHeader("X-RequestDigest", digest),
+		uhttp.WithHeader("X-HTTP-Method", "Merge"),
+		uhttp.WithJSONBody(&SharePointSetUserAdminStatusRequest{
+			Metadata: SharePointMetadata{
+				Type: "SP.User",
+			},
+			IsSiteAdmin: value,
+		}),
+		uhttp.WithHeader("Content-Type", "application/json;odata=verbose"),
+	}
+
+	fullLoginName := guessFullLoginName(userID)
+
+	requestURL.Path = path.Join(requestURL.Path, fmt.Sprintf("_api/web/siteusers(%s)", url.QueryEscape(fullLoginName)))
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, requestURL, reqOpts...)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	return nil
+}

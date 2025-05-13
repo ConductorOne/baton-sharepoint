@@ -1,0 +1,91 @@
+package client
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/conductorone/baton-sdk/pkg/uhttp"
+)
+
+const (
+	formDigestDateLayout = "02 Jan 2006 15:04:05 -0700"
+)
+
+type formDigestResponse struct {
+	FormDigestTimeoutSeconds int    `json:"FormDigestTimeoutSeconds"`
+	FormDigestValue          string `json:"FormDigestValue"`
+	LibraryVersion           string `json:"LibraryVersion"`
+	SiteFullURL              string `json:"SiteFullUrl"`
+	WebFullURL               string `json:"WebFullUrl"`
+}
+
+func (c *Client) getFormDigestValue(ctx context.Context, site string) (string, error) {
+	c.digestMutex.Lock()
+	defer c.digestMutex.Unlock()
+
+	expired := c.digestValueExpiration[site]
+	now := time.Now().UTC()
+	if !expired.IsZero() && now.Before(expired) {
+		return c.digestValuePerSite[site], nil
+	}
+
+	// obtain the form digest value
+	siteUrl, err := url.Parse(site)
+	if err != nil {
+		return "", err
+	}
+
+	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
+	})
+	if err != nil {
+		return "", fmt.Errorf("Client.ListSharePointUsers: failed to fetch bearer token, error: %w", err)
+	}
+
+	reqOpts := []uhttp.RequestOption{
+		uhttp.WithAcceptJSONHeader(),
+		uhttp.WithBearerToken(bearer.Token),
+		uhttp.WithFormBody(""),
+	}
+
+	siteUrl.Path = path.Join(siteUrl.Path, "_api/contextinfo")
+
+	req, err := c.http.NewRequest(ctx, http.MethodPost, siteUrl, reqOpts...)
+	if err != nil {
+		return "", err
+	}
+
+	var data formDigestResponse
+	resp, err := c.http.Do(req, uhttp.WithJSONResponse(&data))
+	if err != nil {
+		return "", err
+	}
+
+	resp.Body.Close()
+
+	parts := strings.Split(data.FormDigestValue, ",")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("malformed digest value received '%s'", data.FormDigestValue)
+	}
+
+	digestTime, err := time.Parse(formDigestDateLayout, parts[1])
+	if err != nil {
+		return "", err
+	}
+	expiresAt := digestTime.Add(time.Second * time.Duration(data.FormDigestTimeoutSeconds))
+
+	c.digestValueExpiration[data.SiteFullURL] = expiresAt
+	c.digestValuePerSite[data.SiteFullURL] = data.FormDigestValue
+
+	return data.FormDigestValue, nil
+}
+
+// Local Variables:
+// go-tag-args: ("-transform" "pascalcase")
+// End:

@@ -89,6 +89,14 @@ func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagi
 	return ret, "", nil, nil
 }
 
+func (o *siteBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
+	return nil, nil, nil
+}
+
+func (o *siteBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	return nil, nil
+}
+
 func newSiteBuilder(c *client.Client, externalSyncMode bool) *siteBuilder {
 	return &siteBuilder{client: c, externalSyncMode: externalSyncMode}
 }

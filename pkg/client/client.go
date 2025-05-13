@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"sync"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -44,8 +46,6 @@ type Client struct {
 	http           *uhttp.BaseHttpClient
 
 	// SharePoint related stuff
-	tenantID         string
-	clientID         string
 	sharePointDomain string
 
 	// SharePointHome OrgLinks groups related stuff
@@ -54,6 +54,12 @@ type Client struct {
 	// SharePoint > Sites.FullControl.All; that's basically full admin
 	// rights over all SharePoint sites!
 	dontFilterSharePointSpecialGroups bool
+	tenantID                          string
+	clientID                          string
+
+	digestValuePerSite    map[string]string
+	digestValueExpiration map[string]time.Time
+	digestMutex           sync.Mutex
 }
 
 type QueryOption func(*queryOptions)

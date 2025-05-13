@@ -66,11 +66,16 @@
               (pkgs.writeShellScriptBin "baton-get-sharepoint-bearer-token" (
                 builtins.readFile ./scripts/get-sharepoint-bearer-token.sh
               ))
+
+              (pkgs.writeShellScriptBin "baton-get-sharepoint-digestform" (
+                builtins.readFile ./scripts/get-sharepoint-digestform-value.sh
+              ))
             ];
 
             # Environment variables
             env = {
               BATON_DEBUG_PRINT_RESPONSE_BODY = ""; # use non-empty value to activate
+              CGO_CFLAGS = "-Wno-error=cpp"; # for debugging with dlv/gdlv
             };
           };
         }
