@@ -29,4 +29,4 @@ lint: format
 
 .PHONY: format
 format:
-	@golangci-lint fmt # don't bother me about bad formatting, just fix it!
+	@golangci-lint fmt

@@ -157,9 +157,16 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 		return nil, err
 	}
 
-	pfxData, err := base64.StdEncoding.DecodeString(pfxCert)
-	if err != nil {
-		return nil, fmt.Errorf("cannot decode base64 string of .pfx certificate, error: %w", err)
+	var pfxData []byte
+	// Check if the certificate is provided as a base64-encoded string
+	if _, err := base64.StdEncoding.DecodeString(pfxCert); err == nil {
+		pfxData, err = base64.StdEncoding.DecodeString(pfxCert)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode base64 string of .pfx certificate, error: %w", err)
+		}
+	} else {
+		// If not a valid base64 string, use the raw content as is (it was loaded from a file)
+		pfxData = []byte(pfxCert)
 	}
 
 	privkey, cert, err := pkcs12.Decode(pfxData, pfxCertPassword)

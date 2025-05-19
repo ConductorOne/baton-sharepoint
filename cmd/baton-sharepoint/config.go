@@ -11,7 +11,8 @@ var (
 	ClientSecretField      = field.StringField("azure-client-secret", field.WithDescription("Azure Client Secret"), field.WithRequired(true))
 	GraphDomainField       = field.StringField("azure-graph-domain", field.WithDescription("Domain for Microsoft Graph API"), field.WithDefaultValue("graph.microsoft.com"))
 	SharePointDomainField  = field.StringField("sharepoint-domain", field.WithDescription("Domain of SharePoint"), field.WithRequired(true))
-	CertPfxField           = field.StringField("pfx-certificate", field.WithDescription("Base64-encoded PFX certificate"), field.WithRequired(true))
+	CertPfxField           = field.StringField("pfx-certificate", field.WithDescription("Base64-encoded PFX certificate"))
+	CertFilePathField      = field.StringField("pfx-certificate-file", field.WithDescription("Path to PFX certificate file"))
 	CertPasswordField      = field.StringField("pfx-certificate-password", field.WithDescription("Password of the PFX certificate"), field.WithRequired(true))
 	SyncOrgLinkGroupsField = field.BoolField(
 		"sync-orglink-groups",
@@ -30,6 +31,7 @@ var (
 		GraphDomainField,
 		SharePointDomainField,
 		CertPfxField,
+		CertFilePathField,
 		CertPasswordField,
 		SyncOrgLinkGroupsField,
 	}
@@ -38,7 +40,9 @@ var (
 	// ConfigurationFields that can be automatically validated. For example, a
 	// username and password can be required together, or an access token can be
 	// marked as mutually exclusive from the username password pair.
-	FieldRelationships = []field.SchemaFieldRelationship{}
+	FieldRelationships = []field.SchemaFieldRelationship{
+		field.FieldsAtLeastOneUsed(CertPfxField, CertFilePathField),
+	}
 )
 
 // ValidateConfig is run after the configuration is loaded, and should return an
@@ -46,5 +50,6 @@ var (
 // needs to perform extra validations that cannot be encoded with configuration
 // parameters.
 func ValidateConfig(v *viper.Viper) error {
+	// Configuration validity is handled by field relationships
 	return nil
 }
