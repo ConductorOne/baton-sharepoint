@@ -3,7 +3,6 @@ package connector
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
@@ -11,13 +10,10 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"go.uber.org/zap"
 )
 
 type siteBuilder struct {
-	client           *client.Client
-	externalSyncMode bool
+	client *client.Client
 }
 
 func (o *siteBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
@@ -56,18 +52,17 @@ func (o *siteBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 func (o *siteBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
 	ent := entitlement.NewPermissionEntitlement(resource, "admin",
 		entitlement.WithDisplayName(fmt.Sprintf("Administrator of %s", resource.DisplayName)),
-		entitlement.WithGrantableTo(userResourceType),
+		entitlement.WithGrantableTo(securityPrincipalResourceType),
 	)
 
 	return []*v2.Entitlement{ent}, "", nil, nil
 }
 
 func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	users, err := o.client.ListSharePointUsers(ctx, rsc.Id.Resource)
+	users, err := o.client.ListSecurityPrincipals(ctx, rsc.Id.Resource)
 	if err != nil {
 		return nil, "", nil, fmt.Errorf("siteBuilder.Grants: cannot list users, error: %w", err)
 	}
-	l := ctxzap.Extract(ctx)
 
 	var ret []*v2.Grant
 	for _, user := range users {
@@ -75,13 +70,12 @@ func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagi
 			continue
 		}
 
-		granted, err := grantHelper(user, o.externalSyncMode, "admin", rsc)
+		granted, isGrantable, err := grantHelper(ctx, user, "admin", rsc)
 		if err != nil {
-			if strings.Contains(err.Error(), "unrecognized user '") {
-				l.Info("skipping unrecognized principal due to error", zap.Error(err))
-				continue
-			}
 			return nil, "", nil, fmt.Errorf("siteBuilder.Grants: failed to grant entitlement, error: %w", err)
+		}
+		if !isGrantable {
+			continue
 		}
 		ret = append(ret, granted)
 	}
@@ -89,8 +83,8 @@ func (o *siteBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagi
 	return ret, "", nil, nil
 }
 
-func newSiteBuilder(c *client.Client, externalSyncMode bool) *siteBuilder {
-	return &siteBuilder{client: c, externalSyncMode: externalSyncMode}
+func newSiteBuilder(c *client.Client) *siteBuilder {
+	return &siteBuilder{client: c}
 }
 
 func convertSite2Resource(site client.Site) (*v2.Resource, error) {

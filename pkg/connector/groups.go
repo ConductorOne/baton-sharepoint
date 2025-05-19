@@ -12,13 +12,17 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sharepoint/pkg/client"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"go.uber.org/zap"
+)
+
+const (
+	// resourceTypeGroup represents the Entra group resource type.
+	resourceTypeGroup = "group"
+	// resourceTypeUser represents the user resource type.
+	resourceTypeUser = "user"
 )
 
 type groupBuilder struct {
-	client           *client.Client
-	externalSyncMode bool
+	client *client.Client
 }
 
 func (g *groupBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
@@ -89,24 +93,21 @@ func (g *groupBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ 
 }
 
 func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	users, err := g.client.ListUsersInGroupByGroupID(ctx, rsc.Id.Resource)
+	securityPrincipals, err := g.client.ListSecurityPrincipalsInGroupByGroupID(ctx, rsc.Id.Resource)
 	if err != nil {
 		return nil, "", nil, err
 	}
-	l := ctxzap.Extract(ctx)
 
 	parts := strings.Split(strings.ToLower(rsc.DisplayName), " ")
 	kind := strings.TrimSuffix(parts[len(parts)-1], "s")
-
 	var ret []*v2.Grant
-	for _, user := range users {
-		granted, err := grantHelper(user, g.externalSyncMode, kind, rsc)
+	for _, securityPrincipal := range securityPrincipals {
+		granted, isGrantable, err := grantHelper(ctx, securityPrincipal, kind, rsc)
 		if err != nil {
-			if strings.Contains(err.Error(), "unrecognized user '") {
-				l.Info("skipping unrecognized principal due to error", zap.Error(err))
-				continue
-			}
 			return nil, "", nil, fmt.Errorf("groupBuilder.Grants: failed to grant entitlement, error: %w", err)
+		}
+		if !isGrantable {
+			continue
 		}
 		ret = append(ret, granted)
 	}
@@ -114,57 +115,61 @@ func (g *groupBuilder) Grants(ctx context.Context, rsc *v2.Resource, pToken *pag
 	return ret, "", nil, nil
 }
 
-func grantHelper(user client.SharePointUser, externalSyncMode bool, kind string, rsc *v2.Resource) (*v2.Grant, error) {
-	if (user.PrincipalType == client.User && strings.Contains(user.LoginName, "membership") && externalSyncMode) || // If Entra user
-		(user.PrincipalType == client.SecurityGroup && strings.Contains(user.LoginName, "federateddirectoryclaimprovider") && externalSyncMode) { // or Entra group
-		// Baton ID
-		var resourceType string
-		var principalName string
-		var keyName string
+func grantHelper(ctx context.Context, securityPrincipal client.SecurityPrincipal, kind string, rsc *v2.Resource) (*v2.Grant, bool, error) {
+	// Filter out built ins
 
-		if strings.Contains(user.LoginName, "federateddirectoryclaimprovider") {
-			resourceType = "group" // the type of resource on Entra
-			parts := strings.Split(user.LoginName, "|")
-			if len(parts) < 3 {
-				return nil, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", user.LoginName)
-			}
+	if securityPrincipal.LoginName == "SHAREPOINT\\system" {
+		return nil, false, nil
+	}
+	if strings.Contains(securityPrincipal.LoginName, "|rolemanager|") {
+		return nil, false, nil
+	}
+	// Baton ID
+	var resourceType string
+	var principalName string
+	var keyName string
 
-			principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
-		} else {
-			resourceType = "user"
-			principalName = user.UserPrincipalName
-			keyName = "userPrincipalName"
+	switch {
+	case strings.Contains(securityPrincipal.LoginName, "federateddirectoryclaimprovider"):
+		resourceType = resourceTypeGroup // the type of resource on Entra
+		parts := strings.Split(securityPrincipal.LoginName, "|")
+		if len(parts) < 3 {
+			return nil, false, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", securityPrincipal.LoginName)
 		}
 
-		principal := &v2.ResourceId{
-			ResourceType: resourceType,
-			Resource:     principalName,
+		principalName = strings.TrimSuffix(parts[2], "_o") // remove suffix in Entra's group ID. Used by SharePoint to indicate "Owners"
+	case strings.Contains(securityPrincipal.LoginName, "|tenant|"):
+		resourceType = resourceTypeGroup
+		parts := strings.Split(securityPrincipal.LoginName, "|")
+		if len(parts) < 3 {
+			return nil, false, fmt.Errorf("cannot identify group by its ID, error: malformed login name '%s'", securityPrincipal.LoginName)
 		}
-
-		if resourceType == "group" {
-			return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
-				Id: principalName,
-			})), nil
-		} else {
-			return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
-				Key:          keyName,
-				Value:        principalName,
-				ResourceType: v2.ResourceType_TRAIT_USER,
-			})), nil
-		}
-	} else if user.PrincipalType == client.SecurityGroup && !strings.Contains(user.LoginName, "federateddirectoryclaimprovider") { // Regular grants
-		id := getReasonableIDfromLoginName(user.LoginName)
-		userID, err := resource.NewResourceID(userResourceType, id)
-		if err != nil {
-			return nil, err
-		}
-
-		return grant.NewGrant(rsc, kind, userID), nil
+		principalName = parts[2]
+		keyName = "loginName"
+	default:
+		resourceType = resourceTypeUser
+		principalName = securityPrincipal.UserPrincipalName
+		keyName = "userPrincipalName"
 	}
 
-	return nil, fmt.Errorf("grantHelper: unrecognized user '%s' of principal type %s", user.LoginName, user.PrincipalType)
+	principal := &v2.ResourceId{
+		ResourceType: resourceType,
+		Resource:     principalName,
+	}
+
+	if resourceType == resourceTypeGroup {
+		return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatchID{
+			Id: principalName,
+		})), true, nil
+	} else {
+		return grant.NewGrant(rsc, kind, principal, grant.WithAnnotation(&v2.ExternalResourceMatch{
+			Key:          keyName,
+			Value:        principalName,
+			ResourceType: v2.ResourceType_TRAIT_USER,
+		})), true, nil
+	}
 }
 
-func newGroupBuilder(c *client.Client, externalSyncMode bool) *groupBuilder {
-	return &groupBuilder{client: c, externalSyncMode: externalSyncMode}
+func newGroupBuilder(c *client.Client) *groupBuilder {
+	return &groupBuilder{client: c}
 }

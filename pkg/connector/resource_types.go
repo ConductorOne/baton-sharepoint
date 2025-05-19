@@ -16,8 +16,8 @@ var groupResourceType = &v2.ResourceType{
 	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
 }
 
-var userResourceType = &v2.ResourceType{
-	Id:          "sharepoint_user",
-	DisplayName: "SharePoint User",
-	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_USER},
+var securityPrincipalResourceType = &v2.ResourceType{
+	Id:          "security_principal",
+	DisplayName: "Security Principal",
+	Traits:      []v2.ResourceType_Trait{v2.ResourceType_TRAIT_GROUP},
 }

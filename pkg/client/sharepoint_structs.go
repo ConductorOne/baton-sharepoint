@@ -78,7 +78,7 @@ type SharePointUserId struct {
 
 // SharePointSiteUser is a SP.User
 // documentation: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-rest-reference/dn531432(v=office.15)#user-properties
-type SharePointUser struct {
+type SecurityPrincipal struct {
 	ODataType     string                   `json:"odata.type"`
 	ODataID       string                   `json:"odata.id"`
 	Id            int                      `json:"Id"`            // Gets a value that specifies the member identifier for the user or group.
