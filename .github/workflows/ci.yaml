@@ -50,7 +50,7 @@ jobs:
       # The following parameters are passed to grant/revoke commands
       # Change these to the correct IDs for your test data
       CONNECTOR_ENTITLEMENT: 'sharepoint_group:https://conductoroneinsulatorone.sharepoint.com/sites/contentTypeHub/_api/Web/SiteGroups/GetById(3):owner'
-      CONNECTOR_PRINCIPAL: 'tenant|1765af64-8106-4545-b6be-9644a4ea8fa4'
+      CONNECTOR_PRINCIPAL: '1765af64-8106-4545-b6be-9644a4ea8fa4'
     steps:
       - name: Install Go
         uses: actions/setup-go@v5
@@ -70,10 +70,11 @@ jobs:
         run: ./scripts/get-baton.sh && mv baton /usr/local/bin
 
       - name: Check for grant # before revoking
-
-        run:
-          baton grants --entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --output-format=json | jq --exit-status ".grants[].principal.id.resource == \"${{ env.CONNECTOR_PRINCIPAL }}\""
-
+        run: |
+          count=$(baton grants --entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --output-format=json | jq '.grants[].principal.id.resource' | grep -c "${{ env.CONNECTOR_PRINCIPAL }}")
+          if [ "$count" -ne 1 ]; then
+            exit 1
+          fi
 
       # - name: Revoke grants
       #   run: ./baton-sharepoint --revoke-grant="${{ env.CONNECTOR_GRANT }}"
