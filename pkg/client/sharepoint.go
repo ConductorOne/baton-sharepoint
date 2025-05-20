@@ -65,7 +65,7 @@ func (c *Client) ListGroupsForSite(ctx context.Context, siteWebURL string) ([]Sh
 	return filtered, nil
 }
 
-func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID string) ([]SharePointUser, error) {
+func (c *Client) ListSecurityPrincipalsInGroupByGroupID(ctx context.Context, groupURLID string) ([]SecurityPrincipal, error) {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})
@@ -85,7 +85,6 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	}
 
 	url.Path = path.Join(url.Path, "Users")
-
 	req, err := c.http.NewRequest(ctx, http.MethodGet, url, reqOpts...)
 	if err != nil {
 		return nil, err
@@ -110,7 +109,7 @@ func (c *Client) ListUsersInGroupByGroupID(ctx context.Context, groupURLID strin
 	return data.Value, nil
 }
 
-func (c *Client) ListSharePointUsers(ctx context.Context, siteWebURL string) ([]SharePointUser, error) {
+func (c *Client) ListSecurityPrincipals(ctx context.Context, siteWebURL string) ([]SecurityPrincipal, error) {
 	bearer, err := c.certbasedToken.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf(scopeSharePointTemplate, c.sharePointDomain)},
 	})

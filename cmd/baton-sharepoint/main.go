@@ -25,7 +25,8 @@ func main() {
 		"baton-sharepoint",
 		getConnector,
 		field.Configuration{
-			Fields: ConfigurationFields,
+			Fields:      ConfigurationFields,
+			Constraints: FieldRelationships,
 		},
 	)
 	if err != nil {
@@ -48,6 +49,14 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 		return nil, err
 	}
 
+	certFilePath := v.GetString(CertFilePathField.FieldName)
+	certBytes, err := os.ReadFile(certFilePath)
+	if err != nil {
+		l.Error("error reading certificate file", zap.Error(err), zap.String("certFilePath", certFilePath))
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+	certContent := string(certBytes)
+
 	cb, err := connector.New(
 		ctx,
 		v.GetString(TenantIDField.FieldName),
@@ -55,9 +64,8 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 		v.GetString(ClientSecretField.FieldName),
 		v.GetString(GraphDomainField.FieldName),
 		v.GetString(SharePointDomainField.FieldName),
-		v.GetString(CertPfxField.FieldName),
+		certContent,
 		v.GetString(CertPasswordField.FieldName),
-		v.GetString("external-resource-c1z") != "", // NOTE(shackra): expect problems if that flag is renamed
 		v.GetBool(SyncOrgLinkGroupsField.FieldName),
 	)
 	if err != nil {

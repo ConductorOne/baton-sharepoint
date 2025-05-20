@@ -12,16 +12,15 @@ import (
 )
 
 type Connector struct {
-	client           *client.Client
-	externalSyncMode bool
+	client *client.Client
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		newSiteBuilder(d.client, d.externalSyncMode),
-		newGroupBuilder(d.client, d.externalSyncMode),
-		newUserBuilder(d.client),
+		newSiteBuilder(d.client),
+		newGroupBuilder(d.client),
+		newSecurityPrincipalBuilder(d.client),
 	}
 }
 
@@ -46,11 +45,14 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword string, activateBatonID, syncSharePointHomeOrgLinks bool) (*Connector, error) {
+// cert parameter should contain the raw content of a PFX certificate file.
+func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert string,
+	certpassword string, syncSharePointHomeOrgLinks bool,
+) (*Connector, error) {
 	c, err := client.New(ctx, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, cert, certpassword, syncSharePointHomeOrgLinks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make connector, error: %w", err)
 	}
 
-	return &Connector{client: c, externalSyncMode: activateBatonID}, nil
+	return &Connector{client: c}, nil
 }

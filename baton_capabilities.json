@@ -15,10 +15,10 @@
     },
     {
       "resourceType": {
-        "id": "sharepoint_user",
-        "displayName": "SharePoint User",
+        "id": "security_principal",
+        "displayName": "Security Principal",
         "traits": [
-          "TRAIT_USER"
+          "TRAIT_GROUP"
         ]
       },
       "capabilities": [

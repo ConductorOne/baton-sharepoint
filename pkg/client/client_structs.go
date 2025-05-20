@@ -10,11 +10,11 @@ type ListGroupsForSiteResponse struct {
 }
 
 type ListUsersInGroupByGroupIDResponse struct {
-	Value []SharePointUser `json:"value"`
+	Value []SecurityPrincipal `json:"value"`
 }
 
 type ListUsersResponse struct {
-	Value []SharePointUser `json:"value"`
+	Value []SecurityPrincipal `json:"value"`
 }
 
 // Local Variables:

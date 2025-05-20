@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"fmt"
 	"net/url"
 	"path"
@@ -133,6 +132,8 @@ func (c *Client) query(ctx context.Context, scopes []string, method, requestURL 
 	return nil
 }
 
+// New creates a new SharePoint client.
+// pfxCert should be the raw content of a PFX certificate file.
 func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sharepointDomain, pfxCert, pfxCertPassword string, syncSharePointHomeOrgLinks bool) (*Client, error) {
 	uhttpOptions := []uhttp.Option{
 		uhttp.WithLogger(true, ctxzap.Extract(ctx)),
@@ -157,10 +158,8 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 		return nil, err
 	}
 
-	pfxData, err := base64.StdEncoding.DecodeString(pfxCert)
-	if err != nil {
-		return nil, fmt.Errorf("cannot decode base64 string of .pfx certificate, error: %w", err)
-	}
+	// Use the raw content as is since it was loaded from a file
+	pfxData := []byte(pfxCert)
 
 	privkey, cert, err := pkcs12.Decode(pfxData, pfxCertPassword)
 	if err != nil {
