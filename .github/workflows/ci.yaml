@@ -42,11 +42,11 @@ jobs:
     env:
       BATON_LOG_LEVEL: debug
       BATON_AZURE_CLIENT_SECRET: ${{ secrets.BATON_AZURE_CLIENT_SECRET }}
-      BATON_PFX_CERTIFICATE: ${{ secrets.BATON_PFX_CERTIFICATE }}
       BATON_PFX_CERTIFICATE_PASSWORD: ${{ secrets.BATON_PFX_CERTIFICATE_PASSWORD }}
       BATON_AZURE_CLIENT_ID: ${{ vars.BATON_AZURE_CLIENT_ID }}
       BATON_AZURE_TENANT_ID: ${{ vars.BATON_AZURE_TENANT_ID }}
       BATON_SHAREPOINT_DOMAIN: ${{ vars.BATON_SHAREPOINT_DOMAIN }}
+      BATON_PFX_CERTIFICATE_FILE: ./cert.pfx
       # The following parameters are passed to grant/revoke commands
       # Change these to the correct IDs for your test data
       CONNECTOR_ENTITLEMENT: 'sharepoint_group:https://conductoroneinsulatorone.sharepoint.com/sites/contentTypeHub/_api/Web/SiteGroups/GetById(3):owner'
@@ -58,6 +58,9 @@ jobs:
           go-version: 1.23.x
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Create PFX certificate file
+        run: |
+          echo "${{ secrets.BATON_PFX_CERTIFICATE }}" | base64 -d > ./cert.pfx
       - name: Build baton-sharepoint
         run: go build ./cmd/baton-sharepoint
       - name: Run baton-sharepoint
