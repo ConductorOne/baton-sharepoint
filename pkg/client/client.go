@@ -3,7 +3,9 @@ package client
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"path"
@@ -12,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 	"software.sslmate.com/src/go-pkcs12"
 
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
@@ -160,6 +163,11 @@ func New(ctx context.Context, tenantID, clientID, clientSecret, graphDomain, sha
 
 	// Use the raw content as is since it was loaded from a file
 	pfxData := []byte(pfxCert)
+
+	// Log the hash of the PFX certificate bytes for debugging
+	hash := sha256.Sum256(pfxData)
+	l := ctxzap.Extract(ctx)
+	l.Debug("PFX certificate loaded", zap.String("sha256_hash", hex.EncodeToString(hash[:])))
 
 	privkey, cert, err := pkcs12.Decode(pfxData, pfxCertPassword)
 	if err != nil {
